@@ -22,7 +22,26 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-if __name__ == "__main__":
-    import sys
-    from .core import cmd_handler
-    sys.exit(cmd_handler.main())  # Import and run cmd_handler.main() when running from the terminal.
+import time
+
+from . import api
+from . import info
+
+from config_handler.simple import Simple
+from simplelogger.logger import Logger  # For logging
+
+
+def main():
+    debug_mode = Simple("./psautomater.conf").get("debug")
+    if debug_mode:
+        loglevel = 5  # Set loglevel to "debug"
+
+    else:
+        loglevel = 3  # Set loglevel to "warning"
+
+    logger = Logger(
+        info.NAME,
+        info.default_logpath,
+        loglevel=loglevel,
+    )
+    logger.info(f"{info.TITLE} has started on {time.asctime()}")

@@ -22,16 +22,16 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-NAME = {
-    "long": "Test",
-    "short": "T"
-}
+import os
+import sys
 
-VERSION = {
-    "tuple": (0, 0, 1),
-    "str": ""  # Filled-in by using `str.join` below
-}
+from .core import info
 
-VERSION["str"] = '.'.join(map(str, VERSION["tuple"]))
+if os.name not in info.supported_systems:
+    print("This program is not supported on this operating system.")
+    sys.exit(1)
 
-TITLE = f"{NAME['long']} v{VERSION['str']}"
+
+if __name__ == "__main__":
+    from .core import cmd_handler
+    sys.exit(cmd_handler.main())  # Import and run cmd_handler.main() when running from the terminal.

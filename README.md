@@ -1,5 +1,7 @@
-# Python Package Framework v2
+# PSAutomater
 
-A Python package framework that can be used as a standalone or importable Python module.
+A Photoshop Editing Automation Tool for bulk editing.
 
-- Template Version: 2.1.3
+## About
+
+This is the next version of my "xlsx2psd" project. (Its last version is 0.1.10)

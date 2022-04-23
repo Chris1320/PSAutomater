@@ -22,13 +22,23 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from . import api
-from . import info
-from . import hello  # The main function of the "hello" program.
 
+class Logger:
+    """
+    An empty class as default logger object.
+    """
 
-def main():
-    print(f"{info.NAME['long']} v{info.VERSION['str']}\n")
-    hello.say_hello()
-    print("It is {0} now.".format(api.get_time()))
-    return 0
+    def debug():
+        pass
+
+    def info():
+        pass
+
+    def warning():
+        pass
+
+    def error():
+        pass
+
+    def critical():
+        pass

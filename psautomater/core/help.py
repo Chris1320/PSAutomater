@@ -22,9 +22,34 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-# Sometimes, you will put methods here that will be exclusive
-# to the program, and not available to the API.
+from . import info
 
 
-def say_hello():
-    print("Hello, world!")
+def help(print_info: bool = True) -> str:
+    """
+    Print this help menu.
+
+    :param bool print_info: If True, print the help menu. Otherwise, just return the help menu.
+
+    :returns str:
+    """
+
+    help_menu = f"""
+{info.TITLE}
+
+USAGE: {info.program_callsign} [OPTIONS]
+
+AVAILABLE OPTIONS:
+--list <filepath>             Manually set the list filepath.
+--template <filepath>         Manually set the PSD template filepath. (Default: `template.psd`)
+--overwrite                   Overwrite files instead of skipping it. (Useful when you updated something in the template)
+--output-folder <filepath>    Set the custom output directory name
+--default-empty <string>      Set the default value for keys that do not have one.
+--no-export                   Do not export PSD files.
+--interactive                 Run in interactive mode.
+"""
+
+    if print_info:
+        print(help_menu)
+
+    return help_menu
