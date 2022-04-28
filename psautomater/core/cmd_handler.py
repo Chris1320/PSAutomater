@@ -22,26 +22,73 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+import sys
 import time
 
 from . import api
 from . import info
 
-from config_handler.simple import Simple
-from simplelogger.logger import Logger  # For logging
+from simplelogger.logger import Logger
+from config_handler.advanced import Advanced
 
 
-def main():
-    debug_mode = Simple("./psautomater.conf").get("debug")
-    if debug_mode:
-        loglevel = 5  # Set loglevel to "debug"
+def main() -> int:
+    """
+    The main function of cmd_handler.py module.
 
-    else:
-        loglevel = 3  # Set loglevel to "warning"
+    :returns int: The exit code of the program.
+    """
 
     logger = Logger(
-        info.NAME,
-        info.default_logpath,
-        loglevel=loglevel,
+        name=info.NAME,
+        logfile=info.DEFAULT_LOGFILEPATH,
+        loglevel=5 if "--debug" in sys.argv else 3,  # 3 = INFO, 5 = DEBUG
     )
-    logger.info(f"{info.TITLE} has started on {time.asctime()}")
+
+    logger.info(f"{info.TITLE} started on {time.ctime()}")
+
+    logger.info("Checking if GUI mode is enabled...")
+    # Check if the user wants to use the GUI or not.
+    if "--no-gui" not in sys.argv:
+        logger.info("GUI mode is enabled.")
+        # GUI mode enabled
+        from . import gui
+        gui.GUI(logger).main()
+
+    else:
+        logger.info("GUI mode is disabled. Continuing to run in CLI mode.")
+
+    logger.info("Checking command-line arguments...")
+    for i, arg in enumerate(sys.argv):
+        logger.debug(f"Argument {i}: {arg}")
+        if i == 0:
+            logger.debug("Ignoring first argument. (program name)")
+            continue
+
+        elif arg in ("--debug", "--no-gui"):
+            logger.debug("Ignoring argument since it is already processed.")
+            continue
+
+        elif arg in ("--help", "-h"):
+            logger.debug("Printing help message and returning 0.")
+            # Print help and quit.
+            print(info.HELP)
+            return 0
+
+        elif arg in ("--version", "-v"):
+            logger.debug("Printing version and returning 0.")
+            print(info.TITLE)
+            print()
+            print("Program Name:", info.NAME)
+            print("Program Version:", info.VERSIONS)
+            print()
+            print("Logfile Path:", info.DEFAULT_LOGFILEPATH)
+            print()
+            print(info.COPYRIGHT)
+            return 0
+
+        elif arg == "build":
+            logger.info("Build mode is enabled.")
+
+        else:
+            logger.warning("Unknown argument: `{arg}`")

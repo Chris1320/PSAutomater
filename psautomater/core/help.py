@@ -22,31 +22,42 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+from sys import argv
+
 from . import info
 
 
 def help(print_info: bool = True) -> str:
     """
-    Print this help menu.
-
-    :param bool print_info: If True, print the help menu. Otherwise, just return the help menu.
-
-    :returns str:
+    Print or return the help menu.
     """
 
     help_menu = f"""
 {info.TITLE}
 
-USAGE: {info.program_callsign} [OPTIONS]
+USAGE:
+    {argv[0]} [COMMANDS] [OPTIONS] [SWITCHES]
 
-AVAILABLE OPTIONS:
---list <filepath>             Manually set the list filepath.
---template <filepath>         Manually set the PSD template filepath. (Default: `template.psd`)
---overwrite                   Overwrite files instead of skipping it. (Useful when you updated something in the template)
---output-folder <filepath>    Set the custom output directory name
---default-empty <string>      Set the default value for keys that do not have one.
---no-export                   Do not export PSD files.
---interactive                 Run in interactive mode.
+AVAILABLE COMMANDS:
+    build                               Create new files using a PSD template and a list.
+        --template <filepath>           The PSD template to use.
+        --list <filepath>               The Excel spreadsheet or CSV list to read details from.
+        --output <folder name>          The path of the new folder to create new files in.
+
+        --default-empty <string>        If a cell is empty, use this string instead.
+        --strict-empty                  If a cell is empty, throw an error.
+
+        --overwrite                     If enabled, overwrite existing files instead of skipping.
+        --no-export                     If enabled, do not export PNG versions of the newly-created files.
+
+AVAILABLE SWITCHES:
+    -h, --help                          Print the help menu and quit.
+    -v, --version                       Print the version of the program and quit.
+
+    --no-gui                            *Do not use the GUI.
+    --debug                             Capture debug information to log file.
+
+*If GUI is enabled, other options will be ignored.
 """
 
     if print_info:

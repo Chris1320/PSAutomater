@@ -22,17 +22,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import os
-import sys
-
-
-# Program Information
 NAME = "PSAutomater"
-VERSIONT = (0, 0, 1)  # Version in tuple format.
-VERSIONS = '.'.join(map(str, VERSIONT))  # Version in str format.
-TITLE = f"{NAME['long']} v{VERSIONS}"
 
-supported_systems = {"nt"}  # Supported OSes.
-default_logpath = os.path.join(os.getenv("TEMP"), "psautomater.log")  # Default logfile path.
+VERSIONT = (0, 0, 1)
+VERSIONS = '.'.join(map(str, VERSIONT))
 
-program_callsign = sys.argv[0]
+TITLE = f"{NAME} v{VERSIONS}"
+
+DEFAULT_LOGFILEPATH = "logs/psautomater.log"
+SUPPORTED_SYSTEMS = {"nt"}  # Supported OSes.
+
+COPYRIGHT = "Copyright (c) 2022 Chris1320 [MIT License]"

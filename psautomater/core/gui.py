@@ -22,25 +22,48 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import pandas  # For reading Excel spreadsheet
+import tkinter as tk
+
+from . import default_logger
 
 
-class ListReader():
+class GUI:
     """
-    The class responsible for reading lists.
+    The class that handles GUI events.
     """
 
-    def __init__(self, list_path: str):
+    def __init__(self, logger = None):
         """
-        Initializes the ListReader() class.
+        The initialization method of the GUI() class.
 
-        :param str list_path: The filepath of the list.
-        """
-
-        self._list_path = list_path
-
-    def readFile(self) -> None:
-        """
+        :param class logger: The logger class to use.
         """
 
-        pass
+        self.root = tk.Tk()
+
+        if logger is not None:
+            self.logger = logger
+
+        else:
+            self.logger = default_logger.Logger()
+
+        self.logger.info("GUI initialized.")
+
+    def showLabel(self):
+        a = tk.Label(self.root, text="Hello, World!")
+        a.pack()
+
+    def start(self):
+        """
+        The start method of the GUI() class.
+        """
+
+        self.root.mainloop()
+
+    def main(self):
+        """
+        The main method of the GUI() class.
+        """
+
+        self.showLabel()
+        self.start()

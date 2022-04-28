@@ -22,5 +22,5 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from .core import api  # Import api and info so it will be available to the user.
-from .core import info
+from core import api
+from core import info

@@ -25,13 +25,13 @@ SOFTWARE.
 import os
 import sys
 
-from .core import info
+from core import info
 
-if os.name not in info.supported_systems:
+if os.name not in info.SUPPORTED_SYSTEMS:
     print("This program is not supported on this operating system.")
     sys.exit(1)
 
 
 if __name__ == "__main__":
-    from .core import cmd_handler
-    sys.exit(cmd_handler.main())  # Import and run cmd_handler.main() when running from the terminal.
+    from core import cmd_handler
+    sys.exit(cmd_handler.main())
