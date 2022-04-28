@@ -68,6 +68,14 @@ def main() -> int:
     # "build": type(bool)
     # "build_opts": type(dict)
     #     "template_filepath": type(str)
+    #     "list_filepath": type(str)
+    #     "output_path": type(str)
+    #     "default_empty_value": type(str)
+    #     "strict_empty": type(bool)
+    #     "duplicate_default_action": type(str)
+    #     "export": type(bool)
+    #     "export_format": type(str)
+
     for i, arg in enumerate(sys.argv):
         if skip_next:
             logger.debug("Skipping current argument.")
@@ -149,8 +157,8 @@ def main() -> int:
 
         elif commands.get("build", False) and arg == "--default-empty":
             logger.info("Setting default empty value.")
-            # Check if strict-empty is True.
-            if commands["build_opts"].get("strict-empty", False):
+            # Check if strict_empty is True.
+            if commands["build_opts"].get("strict_empty", False):
                 err_msg = "`--default-empty` called but `--strict-empty` is already enabled."
                 logger.error(err_msg)
                 print("[E]", err_msg)
@@ -169,7 +177,7 @@ def main() -> int:
 
         elif commands.get("build", False) and arg == "--strict-empty":
             logger.info("Enabling strict empty mode.")
-            commands["build_opts"]["strict-empty"] = True
+            commands["build_opts"]["strict_empty"] = True
 
         elif commands.get("build", False) and arg == "--overwrite":
             logger.info("Switching to overwrite mode.")

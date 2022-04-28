@@ -137,6 +137,9 @@ class CommandParser:
         :returns int: The exit code.
         """
 
-        # TODO
-        print("Processing commands.")
+        # Check if `build` command is called.
+        if self.__commands.get("build", False):
+            self.__logger.info("Entering build mode...")
+            # TODO
+
         return 0
