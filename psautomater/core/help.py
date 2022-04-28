@@ -36,9 +36,16 @@ def help(print_info: bool = True) -> str:
 {info.TITLE}
 
 USAGE:
-    {argv[0]} [COMMANDS] [OPTIONS] [SWITCHES]
+    {argv[0]} [SWITCHES] [COMMANDS] [OPTIONS]
 
-AVAILABLE COMMANDS:
+AVAILABLE SWITCHES:
+    -h, --help                          Print the help menu and quit.
+    -v, --version                       Print the version of the program and quit.
+
+    --no-gui                            *Do not use the GUI.
+    --debug                             Capture debug information to log file.
+
+AVAILABLE COMMANDS & OPTIONS:
     build                               Create new files using a PSD template and a list.
         --template <filepath>           The PSD template to use.
         --list <filepath>               The Excel spreadsheet or CSV list to read details from.
@@ -48,14 +55,7 @@ AVAILABLE COMMANDS:
         --strict-empty                  If a cell is empty, throw an error.
 
         --overwrite                     If enabled, overwrite existing files instead of skipping.
-        --no-export                     If enabled, do not export PNG versions of the newly-created files.
-
-AVAILABLE SWITCHES:
-    -h, --help                          Print the help menu and quit.
-    -v, --version                       Print the version of the program and quit.
-
-    --no-gui                            *Do not use the GUI.
-    --debug                             Capture debug information to log file.
+        --export <format>               Export the newly-created files to a specified format.
 
 *If GUI is enabled, other options will be ignored.
 """

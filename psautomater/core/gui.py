@@ -24,7 +24,7 @@ SOFTWARE.
 
 import tkinter as tk
 
-from . import default_logger
+from .default_logger import Logger
 
 
 class GUI:
@@ -32,7 +32,7 @@ class GUI:
     The class that handles GUI events.
     """
 
-    def __init__(self, logger = None):
+    def __init__(self, logger: Logger = None):
         """
         The initialization method of the GUI() class.
 
@@ -45,7 +45,7 @@ class GUI:
             self.logger = logger
 
         else:
-            self.logger = default_logger.Logger()
+            self.logger = Logger()
 
         self.logger.info("GUI initialized.")
 
@@ -60,10 +60,13 @@ class GUI:
 
         self.root.mainloop()
 
-    def main(self):
+    def main(self) -> int:
         """
         The main method of the GUI() class.
+
+        :retuns int: The error code.
         """
 
         self.showLabel()
         self.start()
+        return 0
