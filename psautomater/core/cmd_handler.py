@@ -27,6 +27,7 @@ import time
 
 from . import api
 from . import info
+from .help import help
 
 from simplelogger.logger import Logger
 # from config_handler.advanced import Advanced
@@ -93,7 +94,7 @@ def main() -> int:
 
         elif arg in ("--help", "-h"):
             logger.debug("Printing help message and returning 0.")
-            print(info.HELP)
+            help()
             return 0
 
         elif arg in ("--version", "-v"):
