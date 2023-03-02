@@ -1,7 +1,7 @@
 """
 MIT License
 
-Copyright (c) 2022 Chris1320
+Copyright (c) 2023 Chris1320
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -25,13 +25,3 @@ SOFTWARE.
 import os
 import sys
 
-from core import info
-
-if os.name not in info.SUPPORTED_SYSTEMS:
-    print("This program is not supported on this operating system.")
-    sys.exit(1)
-
-
-if __name__ == "__main__":
-    from core import cmd_handler
-    sys.exit(cmd_handler.main())
