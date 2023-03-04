@@ -24,6 +24,7 @@ SOFTWARE.
 
 from time import asctime
 
+from loguru import logger
 from PySide6 import QtCore
 from PySide6 import QtGui
 from PySide6 import QtWidgets
@@ -39,6 +40,7 @@ class MainInterface(QtWidgets.QMainWindow):
     """
 
     def __init__(self):
+        logger.info("Initializing MainInterface...")
         super().__init__()
 
         self.resource_manager = resources.ImageManager()
@@ -66,6 +68,7 @@ class MainInterface(QtWidgets.QMainWindow):
         self.setWindowTitle(info.NAME)
         self.setWindowIcon(self.resource_manager["icon"])
         self.setCentralWidget(self.main_container)
+        logger.info("MainInterface initialization done.")
 
     def addHeaderLayout(self) -> QtWidgets.QLayout:
         """
@@ -204,9 +207,11 @@ class MainInterface(QtWidgets.QMainWindow):
         dialog = QtWidgets.QFileDialog(self)
         dialog.setWindowTitle("Choose Spreadsheet File")
         dialog.setFileMode(QtWidgets.QFileDialog.FileMode.ExistingFile)
+        logger.info("Asking user for spreadsheet location...")
         result = dialog.exec()
 
         if result == dialog.DialogCode.Accepted:
+            logger.debug("Spreadsheet filepath: {0}", dialog.selectedFiles()[0])
             self.spreadsheet_txt.setText(dialog.selectedFiles()[0])
 
     def chooseTemplateFile(self) -> None:
@@ -219,9 +224,11 @@ class MainInterface(QtWidgets.QMainWindow):
         dialog = QtWidgets.QFileDialog(self)
         dialog.setWindowTitle("Choose Template File")
         dialog.setFileMode(QtWidgets.QFileDialog.FileMode.ExistingFile)
+        logger.info("Asking user for template location...")
         result = dialog.exec()
 
         if result == dialog.DialogCode.Accepted:
+            logger.debug("Template filepath: {0}", dialog.selectedFiles()[0])
             self.template_txt.setText(dialog.selectedFiles()[0])
 
     def startProcess(self) -> None:
@@ -232,4 +239,5 @@ class MainInterface(QtWidgets.QMainWindow):
         # TODO: Continue this.
 
         self.start_time_lbl.setText(asctime())
+        logger.info("Generation started...")
         self.output_pane.setText("Generation started...")
