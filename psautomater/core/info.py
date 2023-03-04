@@ -22,30 +22,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import sys
+NAME: str = "PSAutomater"
+VERSION: tuple[int, int, int] = (0, 1, 0)
+TITLE: str = f"{NAME} v{'.'.join(map(str, VERSION))}"
 
-from PySide6.QtWidgets import QApplication
-
-from psautomater.core import info
-from psautomater.gui import mainInterface
-
-
-def main() -> int:
-    """
-    The main function of the program.
-
-    :returns: The error code of the program.
-    """
-
-    app = QApplication(sys.argv)
-
-    widget = mainInterface.MainInterface()
-    widget.setMinimumSize(info.WINDOW_SIZE["min"][0], info.WINDOW_SIZE["min"][1])
-    widget.setMaximumSize(info.WINDOW_SIZE["max"][0], info.WINDOW_SIZE["max"][1])
-    widget.show()
-
-    return app.exec()
-
-
-if __name__ == "__main__":
-    sys.exit(main())
+WINDOW_SIZE: dict[str, tuple[int, int]] = {  # (w, h)
+    "min": (640, 540),
+    "max": (1280, 1080)
+}

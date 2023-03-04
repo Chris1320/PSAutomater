@@ -22,30 +22,17 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import sys
+# This module is used to tell the IDE that the attributes in
+# the classes are of type Signal.
 
-from PySide6.QtWidgets import QApplication
+# "The patch was applied but not cherry-picked to 6.4 - added that right now so
+# that the change will be visible in 6.4.3."
+#
+# Source: https://bugreports.qt.io/browse/PYSIDE-1603
 
-from psautomater.core import info
-from psautomater.gui import mainInterface
-
-
-def main() -> int:
-    """
-    The main function of the program.
-
-    :returns: The error code of the program.
-    """
-
-    app = QApplication(sys.argv)
-
-    widget = mainInterface.MainInterface()
-    widget.setMinimumSize(info.WINDOW_SIZE["min"][0], info.WINDOW_SIZE["min"][1])
-    widget.setMaximumSize(info.WINDOW_SIZE["max"][0], info.WINDOW_SIZE["max"][1])
-    widget.show()
-
-    return app.exec()
+from PySide6 import QtWidgets
+from PySide6.QtCore import Signal
 
 
-if __name__ == "__main__":
-    sys.exit(main())
+class QPushButton(QtWidgets.QPushButton):
+    clicked: Signal
