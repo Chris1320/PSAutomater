@@ -44,7 +44,7 @@ jobs:
                       uv-${{ runner.os }}
 
             - name: Install project
-              run: uv sync --all-extras
+              run: uv sync --group dev
 
             - name: Lint Codebase using pylint
               run: uv run pylint --fail-under=9 $target_dirs
