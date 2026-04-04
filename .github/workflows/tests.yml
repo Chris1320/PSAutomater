@@ -47,7 +47,7 @@ jobs:
                       uv-${{ runner.os }}
 
             - name: Install project
-              run: uv sync --all-extras
+              run: uv sync --group dev
 
             - name: Run tests
               run: uv run pytest
