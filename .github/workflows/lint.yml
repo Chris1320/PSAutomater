@@ -12,7 +12,7 @@ on:
     workflow_dispatch:
 
 jobs:
-    lint-central_server:
+    lint:
         runs-on: ubuntu-latest
         env:
             target_dirs: ./psautomater ./tests
