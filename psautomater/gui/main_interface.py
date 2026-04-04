@@ -1,21 +1,13 @@
-
-
 from time import asctime
 
 from loguru import logger
-from PySide6 import QtCore
-from PySide6 import QtGui
-from PySide6 import QtWidgets
+from PySide6 import QtCore, QtGui, QtWidgets
 
-from psautomater.core import info
-from psautomater.core import pyside6_types
-from psautomater.core import resources
+from psautomater.core import info, pyside6_types, resources
 
 
 class MainInterface(QtWidgets.QMainWindow):
-    """
-    The main widget of the program.
-    """
+    """The main widget of the program."""
 
     def __init__(self):
         logger.info("Initializing MainInterface...")
@@ -38,9 +30,9 @@ class MainInterface(QtWidgets.QMainWindow):
         self.main_container = QtWidgets.QWidget()
         self.main_layout = QtWidgets.QVBoxLayout()
 
-        self.main_layout.addLayout(self.addHeaderLayout())  # Add the header layout.
-        self.main_layout.addLayout(self.addContentLayout())  # Add the main contents.
-        self.main_layout.addLayout(self.addFooterLayout())  # Add the footer layout.
+        self.main_layout.addLayout(self.add_header_layout())  # Add the header layout.
+        self.main_layout.addLayout(self.add_content_layout())  # Add the main contents.
+        self.main_layout.addLayout(self.add_footer_layout())  # Add the footer layout.
 
         self.main_container.setLayout(self.main_layout)
         self.setWindowTitle(info.NAME)
@@ -48,15 +40,17 @@ class MainInterface(QtWidgets.QMainWindow):
         self.setCentralWidget(self.main_container)
         logger.info("MainInterface initialization done.")
 
-    def addHeaderLayout(self) -> QtWidgets.QLayout:
-        """
-        Add the program header to the main layout.
-        """
+    def add_header_layout(self) -> QtWidgets.QLayout:
+        """Add the program header to the main layout."""
 
         layout = QtWidgets.QHBoxLayout()
 
         icon = QtWidgets.QLabel()
-        icon.setPixmap(self.resource_manager["icon"].scaled(50, 50, QtCore.Qt.AspectRatioMode.KeepAspectRatio))
+        icon.setPixmap(
+            self.resource_manager["icon"].scaled(
+                50, 50, QtCore.Qt.AspectRatioMode.KeepAspectRatio
+            )
+        )
         icon.setAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
         icon.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
 
@@ -73,10 +67,8 @@ class MainInterface(QtWidgets.QMainWindow):
 
         return layout
 
-    def addFooterLayout(self) -> QtWidgets.QLayout:
-        """
-        Add the footer widgets.
-        """
+    def add_footer_layout(self) -> QtWidgets.QLayout:
+        """Add the footer widgets."""
 
         layout = QtWidgets.QHBoxLayout()
         layout.addWidget(self.process_progress_bar)
@@ -84,14 +76,12 @@ class MainInterface(QtWidgets.QMainWindow):
 
         return layout
 
-    def addContentLayout(self) -> QtWidgets.QLayout:
-        """
-        Return the layout that contains widgets of the main program.
-        """
+    def add_content_layout(self) -> QtWidgets.QLayout:
+        """Return the layout that contains widgets of the main program."""
 
         main_content_layout = QtWidgets.QHBoxLayout()
-        left_pane_layout = self.createLeftContentPane()
-        right_pane_layout = self.createRightContentPane()
+        left_pane_layout = self.create_left_content_pane()
+        right_pane_layout = self.create_right_content_pane()
 
         main_content_layout.addLayout(left_pane_layout)
         main_content_layout.addLayout(right_pane_layout)
@@ -99,10 +89,8 @@ class MainInterface(QtWidgets.QMainWindow):
 
         return main_content_layout
 
-    def createRightContentPane(self) -> QtWidgets.QLayout:
-        """
-        Return the right side of the main content pane.
-        """
+    def create_right_content_pane(self) -> QtWidgets.QLayout:
+        """Return the right side of the main content pane."""
 
         pane_layout = QtWidgets.QVBoxLayout()
         start_time_layout = QtWidgets.QHBoxLayout()
@@ -134,10 +122,8 @@ class MainInterface(QtWidgets.QMainWindow):
 
         return pane_layout
 
-    def createLeftContentPane(self) -> QtWidgets.QLayout:
-        """
-        Return the left side of the main content pane.
-        """
+    def create_left_content_pane(self) -> QtWidgets.QLayout:
+        """Return the left side of the main content pane."""
 
         main_pane_layout = QtWidgets.QVBoxLayout()
         spreadsheet_layout = QtWidgets.QHBoxLayout()
@@ -148,14 +134,14 @@ class MainInterface(QtWidgets.QMainWindow):
         self.spreadsheet_txt.setPlaceholderText("spreadsheet.xlsx")
         spreadsheet_btn = pyside6_types.QPushButton("Browse...")
         spreadsheet_btn.setIcon(self.resource_manager["xlsx"])
-        spreadsheet_btn.clicked.connect(self.chooseSpreadsheetFile)
+        spreadsheet_btn.clicked.connect(self.choose_spreadsheet_file)
 
         template_lbl = QtWidgets.QLabel("Template File: ")
         self.template_txt.setReadOnly(True)
         self.template_txt.setPlaceholderText("template.psd")
         template_btn = pyside6_types.QPushButton("Browse...")
         template_btn.setIcon(self.resource_manager["psd"])
-        template_btn.clicked.connect(self.chooseTemplateFile)
+        template_btn.clicked.connect(self.choose_template_file)
 
         spreadsheet_layout.addWidget(spreadsheet_lbl)
         spreadsheet_layout.addWidget(spreadsheet_btn)
@@ -164,7 +150,7 @@ class MainInterface(QtWidgets.QMainWindow):
 
         start_button = pyside6_types.QPushButton("Start Generation")
         start_button.setIcon(self.resource_manager["start"])
-        start_button.clicked.connect(self.startProcess)
+        start_button.clicked.connect(self.start_process)
 
         main_pane_layout.addLayout(spreadsheet_layout)
         main_pane_layout.addWidget(self.spreadsheet_txt)
@@ -175,15 +161,12 @@ class MainInterface(QtWidgets.QMainWindow):
         main_pane_layout.addWidget(start_button)
         return main_pane_layout
 
-    def chooseSpreadsheetFile(self) -> None:
-        """
-        Ask the user for the spreadsheet file.
-        """
-
-        # FIXME: Only show files ending in supported extensions.
+    def choose_spreadsheet_file(self) -> None:
+        """Ask the user for the spreadsheet file."""
 
         dialog = QtWidgets.QFileDialog(self)
         dialog.setWindowTitle("Choose Spreadsheet File")
+        dialog.setNameFilter("Spreadsheet Files (*.xlsx)")
         dialog.setFileMode(QtWidgets.QFileDialog.FileMode.ExistingFile)
         logger.info("Asking user for spreadsheet location...")
         result = dialog.exec()
@@ -192,15 +175,12 @@ class MainInterface(QtWidgets.QMainWindow):
             logger.debug("Spreadsheet filepath: {0}", dialog.selectedFiles()[0])
             self.spreadsheet_txt.setText(dialog.selectedFiles()[0])
 
-    def chooseTemplateFile(self) -> None:
-        """
-        Ask the user for the template file.
-        """
-
-        # FIXME: Only show files ending in supported extensions.
+    def choose_template_file(self) -> None:
+        """Ask the user for the template file."""
 
         dialog = QtWidgets.QFileDialog(self)
         dialog.setWindowTitle("Choose Template File")
+        dialog.setNameFilter("Photoshop Files (*.psd)")
         dialog.setFileMode(QtWidgets.QFileDialog.FileMode.ExistingFile)
         logger.info("Asking user for template location...")
         result = dialog.exec()
@@ -209,10 +189,8 @@ class MainInterface(QtWidgets.QMainWindow):
             logger.debug("Template filepath: {0}", dialog.selectedFiles()[0])
             self.template_txt.setText(dialog.selectedFiles()[0])
 
-    def startProcess(self) -> None:
-        """
-        Start the generation of images.
-        """
+    def start_process(self) -> None:
+        """Start the generation of images."""
 
         # TODO: Continue this.
 

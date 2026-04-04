@@ -1,8 +1,8 @@
-from time import strftime
 from pathlib import Path
+from time import strftime
 
 NAME: str = "PSAutomater"
-VERSION: tuple[int, int, int] = (0, 1, 1)
+VERSION: tuple[int, int, int] = (0, 2, 0)
 TITLE: str = f"{NAME} v{'.'.join(map(str, VERSION))}"
 
 WINDOW_SIZE: dict[str, tuple[int, int]] = {  # (w, h)
