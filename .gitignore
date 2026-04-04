@@ -1,5 +1,6 @@
 # Project-specific files
 env/
+build-nuitka/
 data/logs/log_*.txt
 
 # Byte-compiled / optimized / DLL files
