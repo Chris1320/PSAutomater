@@ -5,6 +5,7 @@ description = "A Photoshop Editing Automation Tool for bulk editing."
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
+    "fastexcel>=0.19.0",
     "loguru>=0.7.3",
     "mediapipe>=0.10.33",
     "photoshop-python-api>=0.24.2 ; sys_platform == 'win32'",
