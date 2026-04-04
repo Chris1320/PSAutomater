@@ -59,6 +59,7 @@ jobs:
                   "version_bumped=$versionBumped" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
 
             - name: Build standalone application
+              if: steps.version_check.outputs.version_bumped == 'true'
               run: >
                   uv run nuitka --mode=standalone --python-flag="-m" --windows-console-mode=attach --output-dir=./build-nuitka --include-data-dir="./data=data" --noinclude-data-files="data/logs/*.txt" --enable-plugin=pyside6 --assume-yes-for-downloads psautomater
 
