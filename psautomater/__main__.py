@@ -5,14 +5,14 @@ from loguru import logger
 from PySide6.QtWidgets import QApplication
 
 from psautomater.core import info
-from psautomater.gui import mainInterface
+from psautomater.gui import main_interface
 
 
 def main() -> int:
     """The main entry point of the program.
 
     Returns:
-        int: The error code of the program.
+        The error code of the program.
     """
 
     logger.add(
@@ -39,7 +39,7 @@ def main() -> int:
         app.primaryScreen().size().height(),
     )
 
-    widget = mainInterface.MainInterface()
+    widget = main_interface.MainInterface()
     widget.setMinimumSize(info.WINDOW_SIZE["min"][0], info.WINDOW_SIZE["min"][1])
     widget.setMaximumSize(info.WINDOW_SIZE["max"][0], info.WINDOW_SIZE["max"][1])
     widget.show()
