@@ -16,7 +16,7 @@ concurrency:
     cancel-in-progress: true
 
 jobs:
-    test-central-server:
+    test:
         name: Tests
         runs-on: ubuntu-latest
         strategy:
