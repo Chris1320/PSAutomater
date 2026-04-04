@@ -1,7 +1,7 @@
 """
 MIT License
 
-Copyright (c) 2022 Chris1320
+Copyright (c) 2023 Chris1320
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,10 +22,17 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-# API objects here. Example:
+# This module is used to tell the IDE that the attributes in
+# the classes are of type Signal.
 
-import time
+# "The patch was applied but not cherry-picked to 6.4 - added that right now so
+# that the change will be visible in 6.4.3."
+#
+# Source: https://bugreports.qt.io/browse/PYSIDE-1603
+
+from PySide6 import QtWidgets
+from PySide6.QtCore import Signal
 
 
-def get_time():
-    return time.asctime()
+class QPushButton(QtWidgets.QPushButton):
+    clicked: Signal
