@@ -16,7 +16,7 @@ jobs:
         runs-on: ubuntu-latest
         env:
             target_dirs: ./psautomater ./tests
-            UV_CACHE_DIR: /tmp/.uv-cache
+            UV_CACHE_DIR: ${{ runner.temp }}/.uv-cache
 
         strategy:
             matrix:
