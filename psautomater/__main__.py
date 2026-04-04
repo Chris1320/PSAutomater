@@ -1,6 +1,7 @@
 """Application entry point for launching the PSAutomater GUI."""
 
 import sys
+
 from loguru import logger
 from PySide6.QtWidgets import QApplication
 

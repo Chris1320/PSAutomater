@@ -1,5 +1,5 @@
-from time import strftime
 from pathlib import Path
+from time import strftime
 
 NAME: str = "PSAutomater"
 VERSION: tuple[int, int, int] = (0, 2, 0)
