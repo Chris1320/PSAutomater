@@ -20,7 +20,7 @@ jobs:
         name: Tests
         runs-on: ubuntu-latest
         env:
-            UV_CACHE_DIR: /tmp/.uv-cache
+            UV_CACHE_DIR: ${{ runner.temp }}/.uv-cache
         strategy:
             matrix:
                 python-version:
