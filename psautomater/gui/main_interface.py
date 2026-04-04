@@ -4,6 +4,8 @@ from loguru import logger
 from PySide6 import QtCore, QtGui, QtWidgets
 
 from psautomater.core import info, pyside6_types, resources
+from psautomater.core.data_reader.spreadsheet import SpreadsheetReader
+from psautomater.gui.sheet_selection import SheetSelectionDialog
 
 
 class MainInterface(QtWidgets.QMainWindow):
@@ -17,6 +19,7 @@ class MainInterface(QtWidgets.QMainWindow):
 
         # The program output will be shown here.
         self.spreadsheet_txt = QtWidgets.QLineEdit()
+        self.sheet_combo = QtWidgets.QComboBox()
         self.template_txt = QtWidgets.QLineEdit()
         self.process_progress_bar = QtWidgets.QProgressBar()
         self.start_time_lbl = QtWidgets.QLabel()
@@ -30,9 +33,9 @@ class MainInterface(QtWidgets.QMainWindow):
         self.main_container = QtWidgets.QWidget()
         self.main_layout = QtWidgets.QVBoxLayout()
 
-        self.main_layout.addLayout(self.add_header_layout())  # Add the header layout.
-        self.main_layout.addLayout(self.add_content_layout())  # Add the main contents.
-        self.main_layout.addLayout(self.add_footer_layout())  # Add the footer layout.
+        self.main_layout.addLayout(self.add_header_layout())
+        self.main_layout.addLayout(self.add_content_layout())
+        self.main_layout.addLayout(self.add_footer_layout())
 
         self.main_container.setLayout(self.main_layout)
         self.setWindowTitle(info.NAME)
@@ -127,6 +130,7 @@ class MainInterface(QtWidgets.QMainWindow):
 
         main_pane_layout = QtWidgets.QVBoxLayout()
         spreadsheet_layout = QtWidgets.QHBoxLayout()
+        sheet_layout = QtWidgets.QHBoxLayout()
         template_layout = QtWidgets.QHBoxLayout()
 
         spreadsheet_lbl = QtWidgets.QLabel("Spreadsheet File: ")
@@ -135,6 +139,12 @@ class MainInterface(QtWidgets.QMainWindow):
         spreadsheet_btn = pyside6_types.QPushButton("Browse...")
         spreadsheet_btn.setIcon(self.resource_manager["xlsx"])
         spreadsheet_btn.clicked.connect(self.choose_spreadsheet_file)
+
+        sheet_lbl = QtWidgets.QLabel("Sheet: ")
+        self.sheet_combo.setToolTip("Select the sheet to use")
+        self.sheet_combo.currentTextChanged.connect(self.on_sheet_changed)
+        sheet_layout.addWidget(sheet_lbl)
+        sheet_layout.addWidget(self.sheet_combo)
 
         template_lbl = QtWidgets.QLabel("Template File: ")
         self.template_txt.setReadOnly(True)
@@ -154,7 +164,9 @@ class MainInterface(QtWidgets.QMainWindow):
 
         main_pane_layout.addLayout(spreadsheet_layout)
         main_pane_layout.addWidget(self.spreadsheet_txt)
-        main_pane_layout.addSpacing(50)
+        main_pane_layout.addSpacing(10)
+        main_pane_layout.addLayout(sheet_layout)
+        main_pane_layout.addSpacing(30)
         main_pane_layout.addLayout(template_layout)
         main_pane_layout.addWidget(self.template_txt)
         main_pane_layout.addSpacing(200)
@@ -173,7 +185,42 @@ class MainInterface(QtWidgets.QMainWindow):
 
         if result == dialog.DialogCode.Accepted:
             logger.debug("Spreadsheet filepath: {0}", dialog.selectedFiles()[0])
+            self.output_pane.append(
+                f"Selected spreadsheet: {dialog.selectedFiles()[0]}"
+            )
+            try:
+                spreadsheet_reader = SpreadsheetReader(dialog.selectedFiles()[0])
+                sheets = spreadsheet_reader.get_data()
+                # Ask the user which sheet to use, if there are multiple sheets in the spreadsheet.
+                selection_dialog = SheetSelectionDialog(sheets, self)
+
+                selected_sheet = None
+                if selection_dialog.exec() == QtWidgets.QDialog.DialogCode.Accepted:
+                    selected_sheet = selection_dialog.get_selected_sheet()
+                else:
+                    logger.info("Sheet selection cancelled by user.")
+                    return
+
+                # Update the combobox with available sheets
+                self.sheet_combo.clear()
+                self.sheet_combo.addItems(list(sheets.keys()))
+
+                if selected_sheet:
+                    logger.info(f"Selected sheet: {selected_sheet}")
+                    self.sheet_combo.setCurrentText(selected_sheet)
+
+            except Exception as e:
+                logger.error("Error reading spreadsheet: {0}", e)
+                return
+
             self.spreadsheet_txt.setText(dialog.selectedFiles()[0])
+
+    def on_sheet_changed(self, text: str) -> None:
+        """Log the sheet change to the output pane."""
+
+        if text:
+            logger.info(f"Target sheet changed to: {text}")
+            self.output_pane.append(f"Target sheet changed to: {text}")
 
     def choose_template_file(self) -> None:
         """Ask the user for the template file."""
@@ -188,12 +235,11 @@ class MainInterface(QtWidgets.QMainWindow):
         if result == dialog.DialogCode.Accepted:
             logger.debug("Template filepath: {0}", dialog.selectedFiles()[0])
             self.template_txt.setText(dialog.selectedFiles()[0])
+            self.output_pane.append(f"Selected template: {dialog.selectedFiles()[0]}")
 
     def start_process(self) -> None:
         """Start the generation of images."""
 
-        # TODO: Continue this.
-
         self.start_time_lbl.setText(asctime())
         logger.info("Generation started...")
-        self.output_pane.setText("Generation started...")
+        self.output_pane.append("Generation started...")
