@@ -59,16 +59,8 @@ jobs:
                   "version_bumped=$versionBumped" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
 
             - name: Build standalone application
-              uses: Nuitka/Nuitka-Action@main
-              with:
-                  script-name: psautomater
-                  mode: standalone
-                  python-flag: "-m"
-                  windows-console-mode: attach
-                  output-dir: ./build-nuitka
-                  include-data-dir: "./data=data"
-                  noinclude-data-files: "data/logs/*.txt"
-                  enable-plugins: pyside6
+              run: >
+                  uv run nuitka --mode=standalone --python-flag="-m" --windows-console-mode=attach --output-dir=./build-nuitka --include-data-dir="./data=data" --noinclude-data-files="data/logs/*.txt" --enable-plugin=pyside6 --assume-yes-for-downloads psautomater
 
             - name: Create ZIP package
               if: steps.version_check.outputs.version_bumped == 'true'
