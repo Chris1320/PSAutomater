@@ -13,10 +13,12 @@ class LayerSelectionDialog(QtWidgets.QDialog):
     def __init__(
         self,
         psd_path: str,
+        spreadsheet_columns: list[str],
         parent: QtWidgets.QMainWindow | None = None,
     ):
         super().__init__(parent)
         self.psd_path = psd_path
+        self.spreadsheet_columns = spreadsheet_columns
         self.layer_templates: dict[str, str] = {}
 
         self.setWindowTitle("Template Layers")
@@ -54,8 +56,18 @@ class LayerSelectionDialog(QtWidgets.QDialog):
         self.templater_input = QtWidgets.QTextEdit()
         self.templater_input.textChanged.connect(self.on_template_text_changed)
         self.templater_input.setEnabled(False)
+
+        self.templater_combo = QtWidgets.QComboBox()
+        self.templater_combo.addItems(
+            ["-- Do not template --"] + self.spreadsheet_columns
+        )
+        self.templater_combo.currentTextChanged.connect(self.on_template_combo_changed)
+        self.templater_combo.setVisible(False)
+
         middle_layout.addWidget(self.templater_label)
         middle_layout.addWidget(self.templater_input)
+        middle_layout.addWidget(self.templater_combo)
+        middle_layout.addStretch()
         splitter.addWidget(middle_widget)
 
         # Right panel (preview image)
@@ -102,6 +114,9 @@ class LayerSelectionDialog(QtWidgets.QDialog):
                 self.layer_templates[layer.name] = (
                     layer.text  # pyright: ignore[reportUnknownMemberType,reportAttributeAccessIssue]
                 )
+            elif layer.kind == "pixel":
+                logger.debug(f"Adding layer `{layer.name}` to templating options.")
+                self.layer_templates[layer.name] = ""
 
         logger.info(
             f"Added {self.layer_list.count()} templatable layers out of {len(self.layers)} total layers to the list."
@@ -122,14 +137,31 @@ class LayerSelectionDialog(QtWidgets.QDialog):
         # Update templater
         if layer.kind == "type":
             self.templater_label.setText("Text Template:")
+            self.templater_input.setVisible(True)
+            self.templater_combo.setVisible(False)
             self.templater_input.setEnabled(True)
             # Load existing template if it was modified, else the layer's original text
             current_text = self.layer_templates.get(layer.name, layer.text)
             self.templater_input.blockSignals(True)
             self.templater_input.setText(current_text)
             self.templater_input.blockSignals(False)
+        elif layer.kind == "pixel":
+            self.templater_label.setText("Image Source Column:")
+            self.templater_input.setVisible(False)
+            self.templater_combo.setVisible(True)
+            current_val = self.layer_templates.get(layer.name, "")
+            self.templater_combo.blockSignals(True)
+            if not current_val:
+                self.templater_combo.setCurrentIndex(0)
+            else:
+                # current_val is expected to be in formatted style, e.g. "{column_name}"
+                col_name = current_val.strip("{}")
+                self.templater_combo.setCurrentText(col_name)
+            self.templater_combo.blockSignals(False)
         else:
             self.templater_label.setText("Image templating is unsupported.")
+            self.templater_input.setVisible(True)
+            self.templater_combo.setVisible(False)
             self.templater_input.setEnabled(False)
             self.templater_input.blockSignals(True)
             self.templater_input.clear()
@@ -146,6 +178,19 @@ class LayerSelectionDialog(QtWidgets.QDialog):
         layer = current_item.data(QtCore.Qt.ItemDataRole.UserRole)
         if layer.kind == "type":
             self.layer_templates[layer.name] = self.templater_input.toPlainText()
+
+    def on_template_combo_changed(self, text: str):
+        current_item = self.layer_list.currentItem()
+        if not current_item:
+            return
+
+        layer = current_item.data(QtCore.Qt.ItemDataRole.UserRole)
+        if layer.kind == "pixel":
+            if text == "-- Do not template --":
+                self.layer_templates[layer.name] = ""
+            else:
+                # Store the template variable name directly, e.g. {column}
+                self.layer_templates[layer.name] = "{" + text + "}"
 
     def update_preview(self, layer: Layer) -> None:
         """Generate and display a PIL image for the layer."""

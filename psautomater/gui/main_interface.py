@@ -294,7 +294,13 @@ class MainInterface(QtWidgets.QMainWindow):
             self.output_pane.append(f"Selected template: {template_path}")
 
             try:
-                layer_dialog = LayerSelectionDialog(template_path, self)
+                # Read spreadsheet to extract columns for templating
+                spreadsheet_reader = SpreadsheetReader(self.spreadsheet_txt.text())
+                sheets = spreadsheet_reader.get_data()
+                target_sheet = self.sheet_combo.currentText()
+                columns = list(sheets[target_sheet].columns)
+
+                layer_dialog = LayerSelectionDialog(template_path, columns, self)
                 if layer_dialog.exec() == QtWidgets.QDialog.DialogCode.Accepted:
                     self.layer_templates = layer_dialog.get_layer_templates()
                     logger.info("Layer templates configured successfully.")
