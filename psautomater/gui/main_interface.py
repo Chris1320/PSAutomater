@@ -42,6 +42,7 @@ class MainInterface(QtWidgets.QMainWindow):
         self.layer_templates: dict[str, str] = {}
 
         self.process_progress_bar = QtWidgets.QProgressBar()
+        self.process_progress_bar.setFormat("%v/%m")
         self.start_time_lbl = QtWidgets.QLabel()
         self.end_time_lbl = QtWidgets.QLabel()
         self.total_time_lbl = QtWidgets.QLabel()
@@ -409,6 +410,20 @@ class MainInterface(QtWidgets.QMainWindow):
         )
 
         return generation_config
+
+    def update_progress(self, current: int, total: int) -> None:
+        """Update the progress bar."""
+        self.process_progress_bar.setMaximum(total)
+        self.process_progress_bar.setValue(current)
+
+    def on_generation_finished(self) -> None:
+        self.end_time_lbl.setText(asctime())
+        logger.info("Generation finished signal received.")
+
+    def on_generation_error(self, message: str) -> None:
+        self.end_time_lbl.setText(asctime())
+        logger.error(f"Generation error signal received: {message}")
+        self.output_pane.append(f"Error during generation: {message}")
 
     def start_process(self) -> None:
         """Start the generation of images."""
