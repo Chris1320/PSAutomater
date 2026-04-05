@@ -18,6 +18,7 @@ class GenerationConfig:
     target_sheet: str
     template_path: Path
     output_dir: Path
+    output_filename_format: str
     layer_templates: dict[str, str]
 
     feature_auto_crop_image: bool

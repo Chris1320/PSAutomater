@@ -26,6 +26,7 @@ class MainInterface(QtWidgets.QMainWindow):
         self.sheet_combo = QtWidgets.QComboBox()
         self.template_txt = QtWidgets.QLineEdit()
         self.output_dir_txt = QtWidgets.QLineEdit()
+        self.output_filename_format_txt = QtWidgets.QLineEdit()
 
         self.auto_center_chk = QtWidgets.QCheckBox("Auto-Center Image")
         self.auto_crop_chk = QtWidgets.QCheckBox("Auto-Crop Image")
@@ -152,6 +153,7 @@ class MainInterface(QtWidgets.QMainWindow):
         sheet_layout = QtWidgets.QHBoxLayout()
         template_layout = QtWidgets.QHBoxLayout()
         output_dir_layout = QtWidgets.QHBoxLayout()
+        output_format_layout = QtWidgets.QHBoxLayout()
 
         spreadsheet_lbl = QtWidgets.QLabel("Spreadsheet File: ")
         self.spreadsheet_txt.setReadOnly(True)
@@ -187,6 +189,14 @@ class MainInterface(QtWidgets.QMainWindow):
         output_dir_layout.addWidget(output_dir_lbl)
         output_dir_layout.addWidget(output_dir_btn)
 
+        output_format_lbl = QtWidgets.QLabel("Filename Format: ")
+        self.output_filename_format_txt.setPlaceholderText("{column_name}.psd")
+        self.output_filename_format_txt.setToolTip(
+            "Use {column_name} to inject spreadsheet data into the filename."
+        )
+        output_format_layout.addWidget(output_format_lbl)
+        output_format_layout.addWidget(self.output_filename_format_txt)
+
         options_layout = QtWidgets.QHBoxLayout()
         options_layout.addWidget(self.auto_center_chk)
         options_layout.addWidget(self.auto_crop_chk)
@@ -211,6 +221,9 @@ class MainInterface(QtWidgets.QMainWindow):
         main_pane_layout.addSpacing(30)
         main_pane_layout.addLayout(output_dir_layout)
         main_pane_layout.addWidget(self.output_dir_txt)
+        main_pane_layout.addSpacing(30)
+        main_pane_layout.addLayout(output_format_layout)
+        main_pane_layout.addWidget(self.output_filename_format_txt)
         main_pane_layout.addSpacing(30)
         main_pane_layout.addLayout(options_layout)
         main_pane_layout.addSpacing(10)
@@ -373,11 +386,21 @@ class MainInterface(QtWidgets.QMainWindow):
             )
             raise ValueError("No output directory selected.")
 
+        if not self.output_filename_format_txt.text():
+            logger.error("No output filename format provided.")
+            QtWidgets.QMessageBox.critical(
+                self,
+                "Output Filename Format Required",
+                "Please provide a filename format before starting the generation process.",
+            )
+            raise ValueError("No output filename format provided.")
+
         generation_config = GenerationConfig(
             spreadsheet_path=Path(self.spreadsheet_txt.text()),
             target_sheet=self.sheet_combo.currentText(),
             template_path=Path(self.template_txt.text()),
             output_dir=Path(self.output_dir_txt.text()),
+            output_filename_format=self.output_filename_format_txt.text(),
             layer_templates=self.layer_templates,
             feature_auto_crop_image=self.auto_crop_chk.isChecked(),
             feature_auto_center_image=self.auto_center_chk.isChecked(),
