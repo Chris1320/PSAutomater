@@ -7,6 +7,84 @@ from psd_tools.api.layers import Layer
 from PySide6 import QtCore, QtGui, QtWidgets
 
 
+class TemplateTextEdit(QtWidgets.QTextEdit):
+    """A QTextEdit subclass that supports autocompletion for {placeholders}."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.completer: QtWidgets.QCompleter | None = None
+
+    def set_completer(self, completer: QtWidgets.QCompleter):
+        self.completer = completer
+        self.completer.setWidget(self)
+        self.completer.setCompletionMode(
+            QtWidgets.QCompleter.CompletionMode.PopupCompletion
+        )
+        self.completer.setCaseSensitivity(QtCore.Qt.CaseSensitivity.CaseInsensitive)
+        self.completer.activated.connect(self.insert_completion)
+
+    def insert_completion(self, completion: str):
+        if not self.completer or self.completer.widget() is not self:
+            return
+        tc = self.textCursor()
+        prefix = self.completer.completionPrefix()
+        # Select the prefix backwards from the cursor and replace it
+        tc.movePosition(
+            QtGui.QTextCursor.MoveOperation.Left,
+            QtGui.QTextCursor.MoveMode.KeepAnchor,
+            len(prefix),
+        )
+        tc.removeSelectedText()
+        tc.insertText(completion)
+        self.setTextCursor(tc)
+
+    def text_under_cursor(self) -> str:
+        tc = self.textCursor()
+        text = tc.block().text()
+        pos = tc.positionInBlock()
+        start = text.rfind("{", 0, pos)
+        if start == -1:
+            return ""
+        # Don't trigger if it's already closed
+        if "}" in text[start:pos]:
+            return ""
+        return text[start:pos]
+
+    def keyPressEvent(self, e: QtGui.QKeyEvent):
+        if (
+            self.completer
+            and self.completer.popup()
+            and self.completer.popup().isVisible()
+        ):
+            if e.key() in (
+                QtCore.Qt.Key.Key_Enter,
+                QtCore.Qt.Key.Key_Return,
+                QtCore.Qt.Key.Key_Escape,
+                QtCore.Qt.Key.Key_Tab,
+                QtCore.Qt.Key.Key_Backtab,
+            ):
+                e.ignore()
+                return
+
+        super().keyPressEvent(e)
+
+        if not self.completer:
+            return
+
+        prefix = self.text_under_cursor()
+        if prefix.startswith("{"):
+            self.completer.setCompletionPrefix(prefix)
+            popup = self.completer.popup()
+            cr = self.cursorRect()
+            cr.setWidth(
+                popup.sizeHintForColumn(0)
+                + popup.verticalScrollBar().sizeHint().width()
+            )
+            self.completer.complete(cr)
+        elif self.completer.popup() and self.completer.popup().isVisible():
+            self.completer.popup().hide()
+
+
 class LayerSelectionDialog(QtWidgets.QDialog):
     """Dialog to template layers from a PSD file."""
 
@@ -53,9 +131,14 @@ class LayerSelectionDialog(QtWidgets.QDialog):
         middle_widget = QtWidgets.QWidget()
         middle_layout = QtWidgets.QVBoxLayout(middle_widget)
         self.templater_label = QtWidgets.QLabel("Select a layer to template")
-        self.templater_input = QtWidgets.QTextEdit()
+        self.templater_input = TemplateTextEdit()
         self.templater_input.textChanged.connect(self.on_template_text_changed)
         self.templater_input.setEnabled(False)
+
+        # Set up completer with spreadsheet columns formatted as `{column}`
+        formatted_columns = [f"{{{col}}}" for col in self.spreadsheet_columns]
+        self.text_completer = QtWidgets.QCompleter(formatted_columns)
+        self.templater_input.set_completer(self.text_completer)
 
         self.templater_combo = QtWidgets.QComboBox()
         self.templater_combo.addItems(
