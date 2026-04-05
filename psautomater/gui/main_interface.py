@@ -7,6 +7,7 @@ from PySide6 import QtCore, QtGui, QtWidgets
 from psautomater.core import info, pyside6_types, resources
 from psautomater.core.data_reader.spreadsheet import SpreadsheetReader
 from psautomater.core.models import EditingStrategy, GenerationConfig
+from psautomater.gui.layer_selection import LayerSelectionDialog
 from psautomater.gui.sheet_selection import SheetSelectionDialog
 
 
@@ -36,6 +37,8 @@ class MainInterface(QtWidgets.QMainWindow):
         self.auto_crop_chk.setChecked(True)
         self.remove_bg_chk.setChecked(True)
         self.editing_strategy_combo.setCurrentText(editing_strategies[0])
+
+        self.layer_templates: dict[str, str] = {}
 
         self.process_progress_bar = QtWidgets.QProgressBar()
         self.start_time_lbl = QtWidgets.QLabel()
@@ -268,6 +271,15 @@ class MainInterface(QtWidgets.QMainWindow):
     def choose_template_file(self) -> None:
         """Ask the user for the template file."""
 
+        if not self.spreadsheet_txt.text() or not self.sheet_combo.currentText():
+            logger.error("Spreadsheet and target sheet not selected before template.")
+            QtWidgets.QMessageBox.critical(
+                self,
+                "Spreadsheet Required",
+                "Please select a spreadsheet file and a target sheet before choosing a template.",
+            )
+            return
+
         dialog = QtWidgets.QFileDialog(self)
         dialog.setWindowTitle("Choose Template File")
         dialog.setNameFilter("Photoshop Files (*.psd)")
@@ -277,8 +289,23 @@ class MainInterface(QtWidgets.QMainWindow):
 
         if result == dialog.DialogCode.Accepted:
             logger.debug("Template filepath: {0}", dialog.selectedFiles()[0])
-            self.template_txt.setText(dialog.selectedFiles()[0])
-            self.output_pane.append(f"Selected template: {dialog.selectedFiles()[0]}")
+            template_path = dialog.selectedFiles()[0]
+            self.template_txt.setText(template_path)
+            self.output_pane.append(f"Selected template: {template_path}")
+
+            try:
+                layer_dialog = LayerSelectionDialog(template_path, self)
+                if layer_dialog.exec() == QtWidgets.QDialog.DialogCode.Accepted:
+                    self.layer_templates = layer_dialog.get_layer_templates()
+                    logger.info("Layer templates configured successfully.")
+                    self.output_pane.append(
+                        f"Mapped {len(self.layer_templates)} template(s)."
+                    )
+                else:
+                    logger.info("Layer selection cancelled by user.")
+
+            except Exception as e:
+                logger.error(f"Error reading PSD layers: {e}")
 
     def choose_output_directory(self) -> None:
         """Ask the user for the output directory."""
@@ -345,6 +372,7 @@ class MainInterface(QtWidgets.QMainWindow):
             target_sheet=self.sheet_combo.currentText(),
             template_path=Path(self.template_txt.text()),
             output_dir=Path(self.output_dir_txt.text()),
+            layer_templates=self.layer_templates,
             feature_auto_crop_image=self.auto_crop_chk.isChecked(),
             feature_auto_center_image=self.auto_center_chk.isChecked(),
             feature_remove_background=self.remove_bg_chk.isChecked(),
