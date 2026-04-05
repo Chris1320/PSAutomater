@@ -2,7 +2,7 @@ from pathlib import Path
 from time import strftime
 
 NAME: str = "PSAutomater"
-VERSION: tuple[int, int, int] = (0, 2, 2)
+VERSION: tuple[int, int, int] = (0, 2, 1)
 TITLE: str = f"{NAME} v{'.'.join(map(str, VERSION))}"
 
 WINDOW_SIZE: dict[str, tuple[int, int]] = {  # (w, h)
