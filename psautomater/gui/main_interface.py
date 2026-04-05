@@ -1,3 +1,4 @@
+from pathlib import Path
 from time import asctime
 
 from loguru import logger
@@ -5,6 +6,7 @@ from PySide6 import QtCore, QtGui, QtWidgets
 
 from psautomater.core import info, pyside6_types, resources
 from psautomater.core.data_reader.spreadsheet import SpreadsheetReader
+from psautomater.core.models import EditingStrategy, GenerationConfig
 from psautomater.gui.sheet_selection import SheetSelectionDialog
 
 
@@ -15,12 +17,26 @@ class MainInterface(QtWidgets.QMainWindow):
         logger.info("Initializing MainInterface...")
         super().__init__()
 
+        editing_strategies = list(map(lambda x: x.value, EditingStrategy))
+
         self.resource_manager = resources.ImageManager()
 
-        # The program output will be shown here.
         self.spreadsheet_txt = QtWidgets.QLineEdit()
         self.sheet_combo = QtWidgets.QComboBox()
         self.template_txt = QtWidgets.QLineEdit()
+        self.output_dir_txt = QtWidgets.QLineEdit()
+
+        self.auto_center_chk = QtWidgets.QCheckBox("Auto-Center Image")
+        self.auto_crop_chk = QtWidgets.QCheckBox("Auto-Crop Image")
+        self.remove_bg_chk = QtWidgets.QCheckBox("Remove Background")
+        self.editing_strategy_combo = QtWidgets.QComboBox()
+        self.editing_strategy_combo.addItems(editing_strategies)
+
+        self.auto_center_chk.setChecked(True)
+        self.auto_crop_chk.setChecked(True)
+        self.remove_bg_chk.setChecked(True)
+        self.editing_strategy_combo.setCurrentText(editing_strategies[0])
+
         self.process_progress_bar = QtWidgets.QProgressBar()
         self.start_time_lbl = QtWidgets.QLabel()
         self.end_time_lbl = QtWidgets.QLabel()
@@ -132,6 +148,7 @@ class MainInterface(QtWidgets.QMainWindow):
         spreadsheet_layout = QtWidgets.QHBoxLayout()
         sheet_layout = QtWidgets.QHBoxLayout()
         template_layout = QtWidgets.QHBoxLayout()
+        output_dir_layout = QtWidgets.QHBoxLayout()
 
         spreadsheet_lbl = QtWidgets.QLabel("Spreadsheet File: ")
         self.spreadsheet_txt.setReadOnly(True)
@@ -158,6 +175,25 @@ class MainInterface(QtWidgets.QMainWindow):
         template_layout.addWidget(template_lbl)
         template_layout.addWidget(template_btn)
 
+        output_dir_lbl = QtWidgets.QLabel("Output Directory: ")
+        self.output_dir_txt.setReadOnly(True)
+        self.output_dir_txt.setPlaceholderText("Select output folder...")
+        output_dir_btn = pyside6_types.QPushButton("Browse...")
+        output_dir_btn.setIcon(self.resource_manager["output"])
+        output_dir_btn.clicked.connect(self.choose_output_directory)
+        output_dir_layout.addWidget(output_dir_lbl)
+        output_dir_layout.addWidget(output_dir_btn)
+
+        options_layout = QtWidgets.QHBoxLayout()
+        options_layout.addWidget(self.auto_center_chk)
+        options_layout.addWidget(self.auto_crop_chk)
+        options_layout.addWidget(self.remove_bg_chk)
+
+        strategy_layout = QtWidgets.QHBoxLayout()
+        strategy_lbl = QtWidgets.QLabel("Editing Strategy: ")
+        strategy_layout.addWidget(strategy_lbl)
+        strategy_layout.addWidget(self.editing_strategy_combo)
+
         start_button = pyside6_types.QPushButton("Start Generation")
         start_button.setIcon(self.resource_manager["start"])
         start_button.clicked.connect(self.start_process)
@@ -169,7 +205,14 @@ class MainInterface(QtWidgets.QMainWindow):
         main_pane_layout.addSpacing(30)
         main_pane_layout.addLayout(template_layout)
         main_pane_layout.addWidget(self.template_txt)
-        main_pane_layout.addSpacing(200)
+        main_pane_layout.addSpacing(30)
+        main_pane_layout.addLayout(output_dir_layout)
+        main_pane_layout.addWidget(self.output_dir_txt)
+        main_pane_layout.addSpacing(30)
+        main_pane_layout.addLayout(options_layout)
+        main_pane_layout.addSpacing(10)
+        main_pane_layout.addLayout(strategy_layout)
+        main_pane_layout.addSpacing(100)
         main_pane_layout.addWidget(start_button)
         return main_pane_layout
 
@@ -237,9 +280,128 @@ class MainInterface(QtWidgets.QMainWindow):
             self.template_txt.setText(dialog.selectedFiles()[0])
             self.output_pane.append(f"Selected template: {dialog.selectedFiles()[0]}")
 
+    def choose_output_directory(self) -> None:
+        """Ask the user for the output directory."""
+
+        logger.info("Asking user for output directory...")
+        directory = QtWidgets.QFileDialog.getExistingDirectory(
+            self, "Choose Output Directory"
+        )
+
+        if directory:
+            logger.debug(f"Output directory: {directory}")
+            self.output_dir_txt.setText(directory)
+            self.output_pane.append(f"Selected output directory: {directory}")
+
+    def prepare_inputs(self) -> GenerationConfig:
+        """Prepare the inputs for the generation process.
+
+        Returns:
+            The configuration for the generation process.
+
+        Raises:
+            ValueError: If any of the required inputs are missing.
+        """
+
+        logger.info("Preparing inputs for generation process...")
+        if not self.spreadsheet_txt.text():
+            logger.error("No spreadsheet file selected.")
+            QtWidgets.QMessageBox.critical(
+                self,
+                "Spreadsheet File Required",
+                "Please select a spreadsheet file before starting the generation process.",
+            )
+            raise ValueError("No spreadsheet file selected.")
+
+        if not self.sheet_combo.currentText():
+            logger.error("No target sheet selected.")
+            QtWidgets.QMessageBox.critical(
+                self,
+                "Target Sheet Required",
+                "Please select a target sheet before starting the generation process.",
+            )
+            raise ValueError("No target sheet selected.")
+
+        if not self.template_txt.text():
+            logger.error("No template file selected.")
+            QtWidgets.QMessageBox.critical(
+                self,
+                "Template File Required",
+                "Please select a template file before starting the generation process.",
+            )
+            raise ValueError("No template file selected.")
+
+        if not self.output_dir_txt.text():
+            logger.error("No output directory selected.")
+            QtWidgets.QMessageBox.critical(
+                self,
+                "Output Directory Required",
+                "Please select an output directory before starting the generation process.",
+            )
+            raise ValueError("No output directory selected.")
+
+        generation_config = GenerationConfig(
+            spreadsheet_path=Path(self.spreadsheet_txt.text()),
+            target_sheet=self.sheet_combo.currentText(),
+            template_path=Path(self.template_txt.text()),
+            output_dir=Path(self.output_dir_txt.text()),
+            feature_auto_crop_image=self.auto_crop_chk.isChecked(),
+            feature_auto_center_image=self.auto_center_chk.isChecked(),
+            feature_remove_background=self.remove_bg_chk.isChecked(),
+            editing_strategy=EditingStrategy(self.editing_strategy_combo.currentText()),
+        )
+
+        return generation_config
+
     def start_process(self) -> None:
         """Start the generation of images."""
 
-        self.start_time_lbl.setText(asctime())
-        logger.info("Generation started...")
-        self.output_pane.append("Generation started...")
+        # Check for required inputs
+        try:
+            generation_config: GenerationConfig = self.prepare_inputs()
+
+            self.output_pane.append("Configuration:")
+            self.output_pane.append(
+                f"    - Spreadsheet: {generation_config.spreadsheet_path}"
+            )
+            self.output_pane.append(
+                f"    - Target Sheet: {generation_config.target_sheet}"
+            )
+            self.output_pane.append(
+                f"    - Template: {generation_config.template_path}"
+            )
+            self.output_pane.append(
+                f"    - Output Directory: {generation_config.output_dir}"
+            )
+            self.output_pane.append(
+                f"    - Editing Strategy: {generation_config.editing_strategy.value}"
+            )
+
+            self.output_pane.append("\nFeatures:")
+            auto_center_image_enabled = (
+                "Yes" if generation_config.feature_auto_center_image else "No"
+            )
+            auto_crop_image_enabled = (
+                "Yes" if generation_config.feature_auto_crop_image else "No"
+            )
+            remove_background_enabled = (
+                "Yes" if generation_config.feature_remove_background else "No"
+            )
+            self.output_pane.append(
+                f"    - Auto-Center Image: {auto_center_image_enabled}"
+            )
+            self.output_pane.append(f"    - Auto-Crop Image: {auto_crop_image_enabled}")
+            self.output_pane.append(
+                f"    - Remove Background: {remove_background_enabled}"
+            )
+
+            self.start_time_lbl.setText(asctime())
+            logger.info("Generation started...")
+            self.output_pane.append("Generation started...")
+
+        except ValueError as e:
+            logger.error(f"Error starting generation process: {e}")
+
+        except Exception as e:
+            logger.error(f"Unexpected error: {e}")
+            self.output_pane.append(f"Unexpected error: {e}")
