@@ -21,6 +21,7 @@ class GenerationConfig:
     output_filename_format: str
     layer_templates: dict[str, str]
 
+    feature_preserve_image_size: bool
     feature_auto_crop_image: bool
     feature_auto_center_image: bool
     feature_remove_background: bool

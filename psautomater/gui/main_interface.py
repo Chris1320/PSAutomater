@@ -29,12 +29,14 @@ class MainInterface(QtWidgets.QMainWindow):
         self.output_filename_format_txt = QtWidgets.QLineEdit()
 
         self.auto_center_chk = QtWidgets.QCheckBox("Auto-Center Image")
+        self.preserve_image_size_chk = QtWidgets.QCheckBox("Preserve Image Size")
         self.auto_crop_chk = QtWidgets.QCheckBox("Auto-Crop Image")
         self.remove_bg_chk = QtWidgets.QCheckBox("Remove Background")
         self.editing_strategy_combo = QtWidgets.QComboBox()
         self.editing_strategy_combo.addItems(editing_strategies)
 
         self.auto_center_chk.setChecked(True)
+        self.preserve_image_size_chk.setChecked(True)
         self.auto_crop_chk.setChecked(True)
         self.remove_bg_chk.setChecked(True)
         self.editing_strategy_combo.setCurrentText(editing_strategies[0])
@@ -200,6 +202,7 @@ class MainInterface(QtWidgets.QMainWindow):
 
         options_layout = QtWidgets.QHBoxLayout()
         options_layout.addWidget(self.auto_center_chk)
+        options_layout.addWidget(self.preserve_image_size_chk)
         options_layout.addWidget(self.auto_crop_chk)
         options_layout.addWidget(self.remove_bg_chk)
 
@@ -403,8 +406,9 @@ class MainInterface(QtWidgets.QMainWindow):
             output_dir=Path(self.output_dir_txt.text()),
             output_filename_format=self.output_filename_format_txt.text(),
             layer_templates=self.layer_templates,
-            feature_auto_crop_image=self.auto_crop_chk.isChecked(),
             feature_auto_center_image=self.auto_center_chk.isChecked(),
+            feature_preserve_image_size=self.preserve_image_size_chk.isChecked(),
+            feature_auto_crop_image=self.auto_crop_chk.isChecked(),
             feature_remove_background=self.remove_bg_chk.isChecked(),
             editing_strategy=EditingStrategy(self.editing_strategy_combo.currentText()),
         )
@@ -453,6 +457,9 @@ class MainInterface(QtWidgets.QMainWindow):
             auto_center_image_enabled = (
                 "Yes" if generation_config.feature_auto_center_image else "No"
             )
+            preserve_image_size_enabled = (
+                "Yes" if generation_config.feature_preserve_image_size else "No"
+            )
             auto_crop_image_enabled = (
                 "Yes" if generation_config.feature_auto_crop_image else "No"
             )
@@ -461,6 +468,9 @@ class MainInterface(QtWidgets.QMainWindow):
             )
             self.output_pane.append(
                 f"    - Auto-Center Image: {auto_center_image_enabled}"
+            )
+            self.output_pane.append(
+                f"    - Preserve Image Size: {preserve_image_size_enabled}"
             )
             self.output_pane.append(f"    - Auto-Crop Image: {auto_crop_image_enabled}")
             self.output_pane.append(
