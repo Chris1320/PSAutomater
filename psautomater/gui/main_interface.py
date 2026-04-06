@@ -7,6 +7,7 @@ from PySide6 import QtCore, QtGui, QtWidgets
 from psautomater.core import info, pyside6_types, resources
 from psautomater.core.data_reader.spreadsheet import SpreadsheetReader
 from psautomater.core.models import EditingStrategy, GenerationConfig
+from psautomater.core.output_generator import OutputGenerator
 from psautomater.gui.layer_selection import LayerSelectionDialog
 from psautomater.gui.sheet_selection import SheetSelectionDialog
 
@@ -17,6 +18,8 @@ class MainInterface(QtWidgets.QMainWindow):
     def __init__(self):
         logger.info("Initializing MainInterface...")
         super().__init__()
+
+        self.generation_worker: OutputGenerator | None = None
 
         editing_strategies = list(map(lambda x: x.value, EditingStrategy))
 
@@ -272,7 +275,7 @@ class MainInterface(QtWidgets.QMainWindow):
                     logger.info(f"Selected sheet: {selected_sheet}")
                     self.sheet_combo.setCurrentText(selected_sheet)
 
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-exception-caught
                 logger.error("Error reading spreadsheet: {0}", e)
                 return
 
@@ -327,7 +330,7 @@ class MainInterface(QtWidgets.QMainWindow):
                 else:
                     logger.info("Layer selection cancelled by user.")
 
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-exception-caught
                 logger.error(f"Error reading PSD layers: {e}")
 
     def choose_output_directory(self) -> None:
@@ -480,6 +483,16 @@ class MainInterface(QtWidgets.QMainWindow):
             self.start_time_lbl.setText(asctime())
             logger.info("Generation started...")
             self.output_pane.append("Generation started...")
+
+            # Run process safely in the background
+            self.generation_worker = OutputGenerator(
+                config=generation_config,
+                log_updated_hooks=[self.output_pane.append],
+                progress_updated_hooks=[self.update_progress],
+                finished_hooks=[self.on_generation_finished],
+                error_hooks=[self.on_generation_error],
+            )
+            self.generation_worker.start()
 
         except ValueError as e:
             logger.error(f"Error starting generation process: {e}")
