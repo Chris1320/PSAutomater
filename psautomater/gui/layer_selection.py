@@ -10,7 +10,7 @@ from PySide6 import QtCore, QtGui, QtWidgets
 class TemplateTextEdit(QtWidgets.QTextEdit):
     """A QTextEdit subclass that supports autocompletion for {placeholders}."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QtWidgets.QWidget | None = None):
         super().__init__(parent)
         self.completer: QtWidgets.QCompleter | None = None
 
@@ -50,7 +50,7 @@ class TemplateTextEdit(QtWidgets.QTextEdit):
             return ""
         return text[start:pos]
 
-    def keyPressEvent(self, e: QtGui.QKeyEvent):
+    def keyPressEvent(self, e: QtGui.QKeyEvent):  # pylint: disable=invalid-name
         if (
             self.completer
             and self.completer.popup()
@@ -92,7 +92,7 @@ class LayerSelectionDialog(QtWidgets.QDialog):
         self,
         psd_path: str,
         spreadsheet_columns: list[str],
-        parent: QtWidgets.QMainWindow | None = None,
+        parent: QtWidgets.QWidget | None = None,
     ):
         super().__init__(parent)
         self.psd_path = psd_path
@@ -224,7 +224,7 @@ class LayerSelectionDialog(QtWidgets.QDialog):
             self.templater_combo.setVisible(False)
             self.templater_input.setEnabled(True)
             # Load existing template if it was modified, else the layer's original text
-            current_text = self.layer_templates.get(layer.name, layer.text)
+            current_text: str = self.layer_templates.get(layer.name, layer.text) or ""
             self.templater_input.blockSignals(True)
             self.templater_input.setText(current_text)
             self.templater_input.blockSignals(False)
@@ -303,7 +303,7 @@ class LayerSelectionDialog(QtWidgets.QDialog):
             )
             self.preview_label.setPixmap(scaled_pixmap)
 
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             logger.error(f"Failed to generate preview: {e}")
             self.preview_label.setText("Preview error")
 
