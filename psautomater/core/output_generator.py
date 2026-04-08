@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Callable
+from typing import Any, Callable
 
 from loguru import logger
 from polars import DataFrame
@@ -78,14 +78,18 @@ class OutputGenerator(QtCore.QThread):
             self.__progress_updated.emit(0, self.total_rows)
 
             # Load Photoshop engine
-            if self.config.editing_strategy == EditingStrategy.COM:
-                self.__log_updated.emit("Initializing Photoshop COM API...")
-                engine = PhotoshopComAPI(Path(self.config.template_path))
+            engine = self.load_engine()
 
-            else:
-                raise ValueError(
-                    "Only 'PhotoshopComAPI' engine is supported currently."
-                )
+            # Start processing rows
+            if self.target_df is None or self.total_rows is None:
+                logger.error("Spreadsheet data not loaded properly.")
+                raise ValueError("Spreadsheet data not loaded properly.")
+
+            logger.debug(f"Starting row processing loop for {self.total_rows} rows...")
+            for idx, row in enumerate(self.target_df.iter_rows(named=True)):
+                logger.info(f"Processing row {idx + 1} of {self.total_rows}")
+                logger.debug(f"Row data: {row}")
+                result: tuple[int, bool] = self.process_row(idx, row)
 
         except Exception as e:  # pylint: disable=broad-exception-caught
             logger.error(f"Error during generation: {e}")
@@ -93,8 +97,10 @@ class OutputGenerator(QtCore.QThread):
 
         finally:
             if engine:
+                logger.debug("Closing Photoshop engine...")
                 engine.close()
 
+            logger.debug("Emitting finished signal...")
             self.__finished.emit()
 
     def load_data(self) -> None:
@@ -122,3 +128,65 @@ class OutputGenerator(QtCore.QThread):
         logger.debug(
             f"Loaded data from sheet `{self.config.target_sheet}`. ({self.total_rows} rows)"
         )
+
+    def load_engine(self) -> PhotoshopComAPI:
+        """Load the Photoshop editing engine."""
+
+        logger.debug(f"Selected engine: {self.config.editing_strategy}")
+        if self.config.editing_strategy == EditingStrategy.COM:
+            self.__log_updated.emit("Initializing Photoshop COM API...")
+            engine = PhotoshopComAPI(Path(self.config.template_path))
+
+        else:
+            logger.error(
+                f"Unsupported editing strategy: {self.config.editing_strategy}"
+            )
+            raise ValueError("Only 'PhotoshopComAPI' engine is supported currently.")
+
+        return engine
+
+    def process_row(self, idx: int, row: dict[str, Any]) -> tuple[int, bool]:
+        """Process a single row of the spreadsheet data.
+
+        Returns:
+            A tuple containing the current row index and a boolean indicating success.
+        """
+
+        current_count = idx + 1
+        logger.info(f"Processing row {current_count}/{self.total_rows}")
+        self.__log_updated.emit(f"Processing row {current_count}/{self.total_rows}...")
+
+        # Format the output filename using the current row data
+        try:
+            output_filename = self.config.output_filename_format.format(**row)
+
+        except KeyError as e:
+            msg = f"Error: Missing column in filename format {e}. Skipping row..."
+            logger.error(msg)
+            self.__log_updated.emit(msg)
+            self.__progress_updated.emit(current_count, self.total_rows)
+            return (idx, False)
+
+        output_path = Path(self.config.output_dir) / output_filename
+        logger.debug(f"Target output path: {output_path}")
+
+        # Replace content of layers based on the current row data
+        for layer_name, template_val in self.config.layer_templates.items():
+            if not template_val:
+                logger.debug(
+                    f"No template value provided for layer '{layer_name}'. Skipping..."
+                )
+                continue
+
+            # TODO: determine layer type first, then proceed with replacement.
+            # This will require a rewrite of the current PhotoshopComAPI engine.
+            try:
+                evaluated_val = str(template_val).format(**row)
+
+            except KeyError as e:
+                logger.warning(
+                    f"Key error {e} replacing layer '{layer_name}'. Value not modified..."
+                )
+                evaluated_val = str(template_val)
+
+        return (idx, True)
