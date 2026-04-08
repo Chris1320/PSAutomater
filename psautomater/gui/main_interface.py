@@ -461,14 +461,14 @@ class MainInterface(QtWidgets.QMainWindow):
         self.total_time_lbl.setText(
             MainInterface._get_total_time(self.start_time, self.end_time)
         )
+
+        self.start_button.clicked.disconnect(self.stop_process)
+        self.start_button.clicked.connect(self.start_process)
+        self.start_button.setIcon(self.resource_manager["start"])
+        self.start_button.setText("Start Generation")
         logger.info("Generation finished signal received.")
 
     def on_generation_error(self, message: str) -> None:
-        self.end_time = time.time()
-        self.end_time_lbl.setText(time.ctime(self.end_time))
-        self.total_time_lbl.setText(
-            MainInterface._get_total_time(self.start_time, self.end_time)
-        )
         logger.error(f"Generation error signal received: {message}")
         self.output_pane.append(f"Error during generation: {message}")
 
