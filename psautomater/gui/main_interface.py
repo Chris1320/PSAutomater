@@ -1,5 +1,5 @@
+import time
 from pathlib import Path
-from time import asctime
 
 from loguru import logger
 from PySide6 import QtCore, QtGui, QtWidgets
@@ -55,6 +55,13 @@ class MainInterface(QtWidgets.QMainWindow):
         self.output_pane.setToolTip("You will see the program output here.")
         self.output_pane.setReadOnly(True)
 
+        self.start_button = pyside6_types.QPushButton("Start Generation")
+        self.start_button.setIcon(self.resource_manager["start"])
+        self.start_button.clicked.connect(self.start_process)
+
+        self.start_time: float | None = None
+        self.end_time: float | None = None
+
         # Initialize main container and layout.
         self.main_container = QtWidgets.QWidget()
         self.main_layout = QtWidgets.QVBoxLayout()
@@ -68,6 +75,35 @@ class MainInterface(QtWidgets.QMainWindow):
         self.setWindowIcon(self.resource_manager["icon"])
         self.setCentralWidget(self.main_container)
         logger.info("MainInterface initialization done.")
+
+    @staticmethod
+    def _get_total_time(start_time: float | None, end_time: float | None) -> str:
+        """Get the total time elapsed between start_time and end_time in a human-readable format.
+
+        Args:
+            start_time: The start time in seconds since the epoch.
+            end_time: The end time in seconds since the epoch.
+
+        Returns:
+            A string representing the total time elapsed in a human-readable format.
+            If either start_time or end_time is None, returns "N/A"."
+        """
+
+        if start_time is None or end_time is None:
+            return "N/A"
+
+        total_seconds = end_time - start_time
+        minutes, seconds = divmod(total_seconds, 60)
+        hours, minutes = divmod(minutes, 60)
+
+        if hours > 0:
+            return f"{int(hours)}h {int(minutes)}m {int(seconds)}s"
+
+        elif minutes > 0:
+            return f"{int(minutes)}m {int(seconds)}s"
+
+        else:
+            return f"{int(seconds)}s"
 
     def add_header_layout(self) -> QtWidgets.QLayout:
         """Add the program header to the main layout."""
@@ -214,10 +250,6 @@ class MainInterface(QtWidgets.QMainWindow):
         strategy_layout.addWidget(strategy_lbl)
         strategy_layout.addWidget(self.editing_strategy_combo)
 
-        start_button = pyside6_types.QPushButton("Start Generation")
-        start_button.setIcon(self.resource_manager["start"])
-        start_button.clicked.connect(self.start_process)
-
         main_pane_layout.addLayout(spreadsheet_layout)
         main_pane_layout.addWidget(self.spreadsheet_txt)
         main_pane_layout.addSpacing(10)
@@ -236,7 +268,7 @@ class MainInterface(QtWidgets.QMainWindow):
         main_pane_layout.addSpacing(10)
         main_pane_layout.addLayout(strategy_layout)
         main_pane_layout.addSpacing(100)
-        main_pane_layout.addWidget(start_button)
+        main_pane_layout.addWidget(self.start_button)
         return main_pane_layout
 
     def choose_spreadsheet_file(self) -> None:
@@ -424,11 +456,19 @@ class MainInterface(QtWidgets.QMainWindow):
         self.process_progress_bar.setValue(current)
 
     def on_generation_finished(self) -> None:
-        self.end_time_lbl.setText(asctime())
+        self.end_time = time.time()
+        self.end_time_lbl.setText(time.ctime(self.end_time))
+        self.total_time_lbl.setText(
+            MainInterface._get_total_time(self.start_time, self.end_time)
+        )
         logger.info("Generation finished signal received.")
 
     def on_generation_error(self, message: str) -> None:
-        self.end_time_lbl.setText(asctime())
+        self.end_time = time.time()
+        self.end_time_lbl.setText(time.ctime(self.end_time))
+        self.total_time_lbl.setText(
+            MainInterface._get_total_time(self.start_time, self.end_time)
+        )
         logger.error(f"Generation error signal received: {message}")
         self.output_pane.append(f"Error during generation: {message}")
 
@@ -480,7 +520,8 @@ class MainInterface(QtWidgets.QMainWindow):
                 f"    - Remove Background: {remove_background_enabled}"
             )
 
-            self.start_time_lbl.setText(asctime())
+            self.start_time = time.time()
+            self.start_time_lbl.setText(time.ctime(self.start_time))
             logger.info("Generation started...")
             self.output_pane.append("Generation started...")
 
@@ -492,11 +533,37 @@ class MainInterface(QtWidgets.QMainWindow):
                 finished_hooks=[self.on_generation_finished],
                 error_hooks=[self.on_generation_error],
             )
+
+            self.start_button.setIcon(self.resource_manager["stop"])
+            self.start_button.setText("Stop Generation")
+
             self.generation_worker.start()
 
         except ValueError as e:
             logger.error(f"Error starting generation process: {e}")
 
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             logger.error(f"Unexpected error: {e}")
             self.output_pane.append(f"Unexpected error: {e}")
+
+    def stop_process(self) -> None:
+        """Stop the generation of images."""
+
+        if (
+            isinstance(self.generation_worker, OutputGenerator)
+            and self.generation_worker.isRunning()
+        ):
+            logger.info("Stopping generation process...")
+            self.start_button.setEnabled(False)
+            self.start_button.setText("Stopping...")
+
+            self.generation_worker.terminate()
+            self.generation_worker.wait()
+
+            self.start_button.setIcon(self.resource_manager["start"])
+            self.start_button.setText("Start Generation")
+            self.start_button.setEnabled(True)
+            self.output_pane.append("Generation stopped by user.")
+
+        else:
+            logger.warning("Stop button clicked but no generation process is running.")

@@ -26,6 +26,16 @@ class OutputGenerator(QtCore.QThread):
         error_hooks: list[Callable[[str], None]] | None = None,
         parent: QtCore.QObject | None = None,
     ):
+        """
+        Args:
+            config: GenerationConfig object containing all generation settings.
+            progress_updated_hooks: List of callables to connect to progress updates.
+            log_updated_hooks: List of callables to connect to log updates.
+            finished_hooks: List of callables to connect to finished signal.
+            error_hooks: List of callables to connect to error signal.
+            parent: Optional parent QObject for the thread.
+        """
+
         logger.debug("Initializing Generator thread...")
         super().__init__(parent)
         self.config = config
@@ -49,3 +59,12 @@ class OutputGenerator(QtCore.QThread):
         for hook in error_hooks or []:
             logger.debug(f"Connecting hook: {hook}")
             self.__error.connect(hook)
+
+    def run(self) -> None:
+        try:
+            self.__log_updated.emit("Generation started...")
+            logger.info("Generation started from worker thread...")
+
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            logger.error(f"Error during generation: {e}")
+            self.__error.emit(str(e))
