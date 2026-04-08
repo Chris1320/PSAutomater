@@ -536,6 +536,8 @@ class MainInterface(QtWidgets.QMainWindow):
 
             self.start_button.setIcon(self.resource_manager["stop"])
             self.start_button.setText("Stop Generation")
+            self.start_button.clicked.disconnect(self.start_process)
+            self.start_button.clicked.connect(self.stop_process)
 
             self.generation_worker.start()
 
