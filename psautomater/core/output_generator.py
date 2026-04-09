@@ -70,9 +70,6 @@ class OutputGenerator(QtCore.QThread):
     def run(self) -> None:
         engine: PhotoshopComAPI | None = None
         try:
-            self.__log_updated.emit("Generation started...")
-            logger.info("Generation started from worker thread...")
-
             # Load spreadsheet data
             self.load_data()
             self.__progress_updated.emit(0, self.total_rows)
