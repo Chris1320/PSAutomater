@@ -10,7 +10,7 @@ dependencies = [
     "mediapipe>=0.10.33",
     "photoshop-python-api>=0.24.2 ; sys_platform == 'win32'",
     "polars>=1.39.3",
-    "psd-tools[composite]>=1.14.3",
+    "psd-tools[composite]>=1.15.0.post1",
     "pyside6>=6.11.0",
     "rembg[cpu]>=2.0.75",
 ]
