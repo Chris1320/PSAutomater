@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from loguru import logger
 from polars import DataFrame, read_excel
 
@@ -5,7 +7,7 @@ from polars import DataFrame, read_excel
 class SpreadsheetReader:
     """A class to read data from a spreadsheet file."""
 
-    def __init__(self, file_path: str):
+    def __init__(self, file_path: Path):
         """
         Args:
             file_path: The path to the spreadsheet file.
@@ -23,5 +25,7 @@ class SpreadsheetReader:
 
         logger.info(f"Fetching sheet information from: {self.file_path}")
         sheets: dict[str, DataFrame] = read_excel(self.file_path, sheet_id=0)
+        # because it is actually reachable, pylint...
+        # pylint: disable=unreachable
         logger.debug(f"Retrieved sheets: {', '.join(list(sheets.keys()))}")
         return sheets
