@@ -25,16 +25,9 @@ If applicable, add screenshots to help explain your problem.
 
 **Desktop (please complete the following information):**
 
-- OS: [e.g. iOS]
-- Browser [e.g. chrome, safari]
-- Version [e.g. 22]
-
-**Smartphone (please complete the following information):**
-
-- Device: [e.g. iPhone6]
-- OS: [e.g. iOS8.1]
-- Browser [e.g. stock browser, safari]
-- Version [e.g. 22]
+- OS: [e.g. Windows 11 25H2]
+- PSAutomater Version [e.g. PSAutomater v1.0.0]
+- Photoshop Version [e.g. Photoshop 2026 v27.0.0]
 
 **Additional context**
 Add any other context about the problem here.
