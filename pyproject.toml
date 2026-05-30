@@ -9,7 +9,7 @@ dependencies = [
     "loguru>=0.7.3",
     "mediapipe>=0.10.35",
     "photoshop-python-api>=0.24.2 ; sys_platform == 'win32'",
-    "polars>=1.41.0",
+    "polars>=1.41.2",
     "psd-tools[composite]>=1.17.1",
     "pyside6>=6.11.1",
     "rembg[cpu]>=2.0.75",
