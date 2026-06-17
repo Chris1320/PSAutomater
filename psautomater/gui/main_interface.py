@@ -1,5 +1,5 @@
+import time
 from pathlib import Path
-from time import asctime
 
 from loguru import logger
 from PySide6 import QtCore, QtGui, QtWidgets
@@ -7,6 +7,8 @@ from PySide6 import QtCore, QtGui, QtWidgets
 from psautomater.core import info, pyside6_types, resources
 from psautomater.core.data_reader.spreadsheet import SpreadsheetReader
 from psautomater.core.models import EditingStrategy, GenerationConfig
+from psautomater.core.output_generator import OutputGenerator
+from psautomater.gui.layer_selection import LayerSelectionDialog
 from psautomater.gui.sheet_selection import SheetSelectionDialog
 
 
@@ -17,6 +19,8 @@ class MainInterface(QtWidgets.QMainWindow):
         logger.info("Initializing MainInterface...")
         super().__init__()
 
+        self.generation_worker: OutputGenerator | None = None
+
         editing_strategies = list(map(lambda x: x.value, EditingStrategy))
 
         self.resource_manager = resources.ImageManager()
@@ -25,25 +29,38 @@ class MainInterface(QtWidgets.QMainWindow):
         self.sheet_combo = QtWidgets.QComboBox()
         self.template_txt = QtWidgets.QLineEdit()
         self.output_dir_txt = QtWidgets.QLineEdit()
+        self.output_filename_format_txt = QtWidgets.QLineEdit()
 
         self.auto_center_chk = QtWidgets.QCheckBox("Auto-Center Image")
+        self.preserve_image_size_chk = QtWidgets.QCheckBox("Preserve Image Size")
         self.auto_crop_chk = QtWidgets.QCheckBox("Auto-Crop Image")
         self.remove_bg_chk = QtWidgets.QCheckBox("Remove Background")
         self.editing_strategy_combo = QtWidgets.QComboBox()
         self.editing_strategy_combo.addItems(editing_strategies)
 
         self.auto_center_chk.setChecked(True)
+        self.preserve_image_size_chk.setChecked(True)
         self.auto_crop_chk.setChecked(True)
         self.remove_bg_chk.setChecked(True)
         self.editing_strategy_combo.setCurrentText(editing_strategies[0])
 
+        self.layer_templates: dict[str, str] = {}
+
         self.process_progress_bar = QtWidgets.QProgressBar()
+        self.process_progress_bar.setFormat("%v/%m")
         self.start_time_lbl = QtWidgets.QLabel()
         self.end_time_lbl = QtWidgets.QLabel()
         self.total_time_lbl = QtWidgets.QLabel()
         self.output_pane = QtWidgets.QTextEdit()
         self.output_pane.setToolTip("You will see the program output here.")
         self.output_pane.setReadOnly(True)
+
+        self.start_button = pyside6_types.QPushButton("Start Generation")
+        self.start_button.setIcon(self.resource_manager["start"])
+        self.start_button.clicked.connect(self.start_process)
+
+        self.start_time: float | None = None
+        self.end_time: float | None = None
 
         # Initialize main container and layout.
         self.main_container = QtWidgets.QWidget()
@@ -58,6 +75,35 @@ class MainInterface(QtWidgets.QMainWindow):
         self.setWindowIcon(self.resource_manager["icon"])
         self.setCentralWidget(self.main_container)
         logger.info("MainInterface initialization done.")
+
+    @staticmethod
+    def _get_total_time(start_time: float | None, end_time: float | None) -> str:
+        """Get the total time elapsed between start_time and end_time in a human-readable format.
+
+        Args:
+            start_time: The start time in seconds since the epoch.
+            end_time: The end time in seconds since the epoch.
+
+        Returns:
+            A string representing the total time elapsed in a human-readable format.
+            If either start_time or end_time is None, returns "N/A"."
+        """
+
+        if start_time is None or end_time is None:
+            return "N/A"
+
+        total_seconds = end_time - start_time
+        minutes, seconds = divmod(total_seconds, 60)
+        hours, minutes = divmod(minutes, 60)
+
+        if hours > 0:
+            return f"{int(hours)}h {int(minutes)}m {int(seconds)}s"
+
+        elif minutes > 0:
+            return f"{int(minutes)}m {int(seconds)}s"
+
+        else:
+            return f"{int(seconds)}s"
 
     def add_header_layout(self) -> QtWidgets.QLayout:
         """Add the program header to the main layout."""
@@ -149,6 +195,7 @@ class MainInterface(QtWidgets.QMainWindow):
         sheet_layout = QtWidgets.QHBoxLayout()
         template_layout = QtWidgets.QHBoxLayout()
         output_dir_layout = QtWidgets.QHBoxLayout()
+        output_format_layout = QtWidgets.QHBoxLayout()
 
         spreadsheet_lbl = QtWidgets.QLabel("Spreadsheet File: ")
         self.spreadsheet_txt.setReadOnly(True)
@@ -184,8 +231,17 @@ class MainInterface(QtWidgets.QMainWindow):
         output_dir_layout.addWidget(output_dir_lbl)
         output_dir_layout.addWidget(output_dir_btn)
 
+        output_format_lbl = QtWidgets.QLabel("Filename Format: ")
+        self.output_filename_format_txt.setPlaceholderText("{column_name}.psd")
+        self.output_filename_format_txt.setToolTip(
+            "Use {column_name} to inject spreadsheet data into the filename."
+        )
+        output_format_layout.addWidget(output_format_lbl)
+        output_format_layout.addWidget(self.output_filename_format_txt)
+
         options_layout = QtWidgets.QHBoxLayout()
         options_layout.addWidget(self.auto_center_chk)
+        options_layout.addWidget(self.preserve_image_size_chk)
         options_layout.addWidget(self.auto_crop_chk)
         options_layout.addWidget(self.remove_bg_chk)
 
@@ -193,10 +249,6 @@ class MainInterface(QtWidgets.QMainWindow):
         strategy_lbl = QtWidgets.QLabel("Editing Strategy: ")
         strategy_layout.addWidget(strategy_lbl)
         strategy_layout.addWidget(self.editing_strategy_combo)
-
-        start_button = pyside6_types.QPushButton("Start Generation")
-        start_button.setIcon(self.resource_manager["start"])
-        start_button.clicked.connect(self.start_process)
 
         main_pane_layout.addLayout(spreadsheet_layout)
         main_pane_layout.addWidget(self.spreadsheet_txt)
@@ -209,11 +261,14 @@ class MainInterface(QtWidgets.QMainWindow):
         main_pane_layout.addLayout(output_dir_layout)
         main_pane_layout.addWidget(self.output_dir_txt)
         main_pane_layout.addSpacing(30)
+        main_pane_layout.addLayout(output_format_layout)
+        main_pane_layout.addWidget(self.output_filename_format_txt)
+        main_pane_layout.addSpacing(30)
         main_pane_layout.addLayout(options_layout)
         main_pane_layout.addSpacing(10)
         main_pane_layout.addLayout(strategy_layout)
         main_pane_layout.addSpacing(100)
-        main_pane_layout.addWidget(start_button)
+        main_pane_layout.addWidget(self.start_button)
         return main_pane_layout
 
     def choose_spreadsheet_file(self) -> None:
@@ -252,7 +307,7 @@ class MainInterface(QtWidgets.QMainWindow):
                     logger.info(f"Selected sheet: {selected_sheet}")
                     self.sheet_combo.setCurrentText(selected_sheet)
 
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-exception-caught
                 logger.error("Error reading spreadsheet: {0}", e)
                 return
 
@@ -268,6 +323,15 @@ class MainInterface(QtWidgets.QMainWindow):
     def choose_template_file(self) -> None:
         """Ask the user for the template file."""
 
+        if not self.spreadsheet_txt.text() or not self.sheet_combo.currentText():
+            logger.error("Spreadsheet and target sheet not selected before template.")
+            QtWidgets.QMessageBox.critical(
+                self,
+                "Spreadsheet Required",
+                "Please select a spreadsheet file and a target sheet before choosing a template.",
+            )
+            return
+
         dialog = QtWidgets.QFileDialog(self)
         dialog.setWindowTitle("Choose Template File")
         dialog.setNameFilter("Photoshop Files (*.psd)")
@@ -277,8 +341,29 @@ class MainInterface(QtWidgets.QMainWindow):
 
         if result == dialog.DialogCode.Accepted:
             logger.debug("Template filepath: {0}", dialog.selectedFiles()[0])
-            self.template_txt.setText(dialog.selectedFiles()[0])
-            self.output_pane.append(f"Selected template: {dialog.selectedFiles()[0]}")
+            template_path = dialog.selectedFiles()[0]
+            self.template_txt.setText(template_path)
+            self.output_pane.append(f"Selected template: {template_path}")
+
+            try:
+                # Read spreadsheet to extract columns for templating
+                spreadsheet_reader = SpreadsheetReader(self.spreadsheet_txt.text())
+                sheets = spreadsheet_reader.get_data()
+                target_sheet = self.sheet_combo.currentText()
+                columns = list(sheets[target_sheet].columns)
+
+                layer_dialog = LayerSelectionDialog(template_path, columns, self)
+                if layer_dialog.exec() == QtWidgets.QDialog.DialogCode.Accepted:
+                    self.layer_templates = layer_dialog.get_layer_templates()
+                    logger.info("Layer templates configured successfully.")
+                    self.output_pane.append(
+                        f"Mapped {len(self.layer_templates)} template(s)."
+                    )
+                else:
+                    logger.info("Layer selection cancelled by user.")
+
+            except Exception as e:  # pylint: disable=broad-exception-caught
+                logger.error(f"Error reading PSD layers: {e}")
 
     def choose_output_directory(self) -> None:
         """Ask the user for the output directory."""
@@ -340,18 +425,52 @@ class MainInterface(QtWidgets.QMainWindow):
             )
             raise ValueError("No output directory selected.")
 
+        if not self.output_filename_format_txt.text():
+            logger.error("No output filename format provided.")
+            QtWidgets.QMessageBox.critical(
+                self,
+                "Output Filename Format Required",
+                "Please provide a filename format before starting the generation process.",
+            )
+            raise ValueError("No output filename format provided.")
+
         generation_config = GenerationConfig(
             spreadsheet_path=Path(self.spreadsheet_txt.text()),
             target_sheet=self.sheet_combo.currentText(),
             template_path=Path(self.template_txt.text()),
             output_dir=Path(self.output_dir_txt.text()),
-            feature_auto_crop_image=self.auto_crop_chk.isChecked(),
+            output_filename_format=self.output_filename_format_txt.text(),
+            layer_templates=self.layer_templates,
             feature_auto_center_image=self.auto_center_chk.isChecked(),
+            feature_preserve_image_size=self.preserve_image_size_chk.isChecked(),
+            feature_auto_crop_image=self.auto_crop_chk.isChecked(),
             feature_remove_background=self.remove_bg_chk.isChecked(),
             editing_strategy=EditingStrategy(self.editing_strategy_combo.currentText()),
         )
 
         return generation_config
+
+    def update_progress(self, current: int, total: int) -> None:
+        """Update the progress bar."""
+        self.process_progress_bar.setMaximum(total)
+        self.process_progress_bar.setValue(current)
+
+    def on_generation_finished(self) -> None:
+        self.end_time = time.time()
+        self.end_time_lbl.setText(time.ctime(self.end_time))
+        self.total_time_lbl.setText(
+            MainInterface._get_total_time(self.start_time, self.end_time)
+        )
+
+        self.start_button.clicked.disconnect(self.stop_process)
+        self.start_button.clicked.connect(self.start_process)
+        self.start_button.setIcon(self.resource_manager["start"])
+        self.start_button.setText("Start Generation")
+        logger.info("Generation finished signal received.")
+
+    def on_generation_error(self, message: str) -> None:
+        logger.error(f"Generation error signal received: {message}")
+        self.output_pane.append(f"Error during generation: {message}")
 
     def start_process(self) -> None:
         """Start the generation of images."""
@@ -381,6 +500,9 @@ class MainInterface(QtWidgets.QMainWindow):
             auto_center_image_enabled = (
                 "Yes" if generation_config.feature_auto_center_image else "No"
             )
+            preserve_image_size_enabled = (
+                "Yes" if generation_config.feature_preserve_image_size else "No"
+            )
             auto_crop_image_enabled = (
                 "Yes" if generation_config.feature_auto_crop_image else "No"
             )
@@ -390,18 +512,60 @@ class MainInterface(QtWidgets.QMainWindow):
             self.output_pane.append(
                 f"    - Auto-Center Image: {auto_center_image_enabled}"
             )
+            self.output_pane.append(
+                f"    - Preserve Image Size: {preserve_image_size_enabled}"
+            )
             self.output_pane.append(f"    - Auto-Crop Image: {auto_crop_image_enabled}")
             self.output_pane.append(
                 f"    - Remove Background: {remove_background_enabled}"
             )
 
-            self.start_time_lbl.setText(asctime())
+            self.start_time = time.time()
+            self.start_time_lbl.setText(time.ctime(self.start_time))
             logger.info("Generation started...")
             self.output_pane.append("Generation started...")
+
+            # Run process safely in the background
+            self.generation_worker = OutputGenerator(
+                config=generation_config,
+                log_updated_hooks=[self.output_pane.append],
+                progress_updated_hooks=[self.update_progress],
+                finished_hooks=[self.on_generation_finished],
+                error_hooks=[self.on_generation_error],
+            )
+
+            self.start_button.setIcon(self.resource_manager["stop"])
+            self.start_button.setText("Stop Generation")
+            self.start_button.clicked.disconnect(self.start_process)
+            self.start_button.clicked.connect(self.stop_process)
+
+            self.generation_worker.start()
 
         except ValueError as e:
             logger.error(f"Error starting generation process: {e}")
 
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             logger.error(f"Unexpected error: {e}")
             self.output_pane.append(f"Unexpected error: {e}")
+
+    def stop_process(self) -> None:
+        """Stop the generation of images."""
+
+        if (
+            isinstance(self.generation_worker, OutputGenerator)
+            and self.generation_worker.isRunning()
+        ):
+            logger.info("Stopping generation process...")
+            self.start_button.setEnabled(False)
+            self.start_button.setText("Stopping...")
+
+            self.generation_worker.terminate()
+            self.generation_worker.wait()
+
+            self.start_button.setIcon(self.resource_manager["start"])
+            self.start_button.setText("Start Generation")
+            self.start_button.setEnabled(True)
+            self.output_pane.append("Generation stopped by user.")
+
+        else:
+            logger.warning("Stop button clicked but no generation process is running.")
