@@ -2,6 +2,8 @@ from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 
+import photoshop.api as ps_api  # pyright: ignore[reportMissingTypeStubs]
+
 
 class EditingStrategy(Enum):
     COM = "COM"
@@ -16,9 +18,22 @@ class GenerationConfig:
     target_sheet: str
     template_path: Path
     output_dir: Path
+    output_filename_format: str
+    layer_templates: dict[str, str]
 
+    feature_preserve_image_size: bool
     feature_auto_crop_image: bool
     feature_auto_center_image: bool
     feature_remove_background: bool
 
     editing_strategy: EditingStrategy
+
+
+@dataclass
+class PSDLayerInfo:
+    """A dataclass to store information about a PSD layer."""
+
+    name: str
+    kind: ps_api.LayerKind
+    visible: bool
+    opacity: int
