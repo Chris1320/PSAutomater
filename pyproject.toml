@@ -12,7 +12,7 @@ dependencies = [
     "polars>=1.42.1",
     "psd-tools[composite]>=1.17.4",
     "pyside6>=6.11.1",
-    "rembg[cpu]>=2.0.76",
+    "rembg[cpu]>=2.0.77",
 ]
 
 [dependency-groups]
