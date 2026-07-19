@@ -1,12 +1,10 @@
-"""Application entry point for launching the PSAutomater GUI."""
-
 import sys
 
 from loguru import logger
 from PySide6.QtWidgets import QApplication
 
-from psautomater.core import info
-from psautomater.gui import main_interface
+from psautomater.controllers import info
+from psautomater.views import main_view
 
 
 def main() -> int:
@@ -40,7 +38,7 @@ def main() -> int:
         app.primaryScreen().size().height(),
     )
 
-    widget = main_interface.MainInterface()
+    widget = main_view.MainView()
     widget.setMinimumSize(info.WINDOW_SIZE["min"][0], info.WINDOW_SIZE["min"][1])
     widget.setMaximumSize(info.WINDOW_SIZE["max"][0], info.WINDOW_SIZE["max"][1])
     widget.show()

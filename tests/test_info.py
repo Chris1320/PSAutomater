@@ -1,7 +1,7 @@
 from pathlib import Path
 from tomllib import load
 
-from psautomater.core.info import NAME, TITLE, VERSION
+from psautomater.controllers.info import NAME, TITLE, VERSION
 
 
 def test_project_metadata_matches_pyproject() -> None:
