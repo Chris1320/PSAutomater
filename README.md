@@ -18,12 +18,12 @@ It also has other features such as...
 
 - When templating images, it's best to use a template that has the same dimensions as the original images. This will ensure that the edited images look consistent.
 
-> [!info]
+> [!note]
 > This is the next version of my "xlsx2psd" project. (its last version is `0.1.10`)
 
 ## Usage
 
-> [!info]
+> [!note]
 > This project is still in development, and the usage instructions are not yet complete.
 > Please check back later for more information.
 
