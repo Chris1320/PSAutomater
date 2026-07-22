@@ -93,6 +93,8 @@ class ImageManager:
 
 
 class StyleManager:
+    """This class handles the management of styles and themes."""
+
     __init: bool = False
     __styles: list[str] = []
 
