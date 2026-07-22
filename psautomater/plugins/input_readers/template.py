@@ -4,10 +4,12 @@ from typing import Any, Final, Generator
 from PySide6 import QtWidgets
 
 from psautomater.interfaces.input_readers import InputReader, InputReaderNode
-from psautomater.models import Row
+from psautomater.models import NodeKind, Row
 
-NAME: Final[str] = "Template Plugin"
+UID: Final[str] = "chris1320.template_plugin"
+NAME: Final[str] = "Input Reader Template"
 VERSION: Final[str] = "1.0.0"
+KIND: Final[NodeKind] = NodeKind.INPUT_READER
 
 
 class InputReaderPlugin(InputReader):
