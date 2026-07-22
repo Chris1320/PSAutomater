@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
+from typing import Any, Generator
 
 from PySide6.QtWidgets import QWidget
 
@@ -9,27 +10,19 @@ from psautomater.models import Row
 class InputReader(ABC):
     """A plugin protocol for reading input files."""
 
-    __filepath: Path
-
-    def __init__(self, filepath: Path):
-        """Initialize the InputReader with a file path.
-
-        Args:
-            filepath: The path to the input file.
-        """
-
-        self.__filepath = filepath
+    def __init__(self):
+        pass
 
     @property
-    def filepath(self) -> Path:
-        return self.__filepath
+    @abstractmethod
+    def filepath(self) -> Path: ...
 
     @abstractmethod
     def get_column_names(self) -> list[str]:
         """Returns a list of column names from the input file."""
 
     @abstractmethod
-    def get_next_row(self) -> Row:
+    def get_next_row(self) -> Generator[Row, Any, Any]:
         """Yields the next row of data as a Row object."""
 
     @abstractmethod
@@ -51,16 +44,6 @@ class InputReader(ABC):
 
 class InputReaderNode(ABC):
     """The UI node for the InputReader plugin protocol."""
-
-    @property
-    @abstractmethod
-    def name(self) -> str:
-        """Returns the name of the InputReader plugin."""
-
-    @property
-    @abstractmethod
-    def version(self) -> str:
-        """Returns the version of the InputReader plugin."""
 
     @abstractmethod
     def show_initial_configuration_dialog(self) -> QWidget:
