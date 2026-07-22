@@ -8,9 +8,11 @@ dependencies = [
     "fastexcel>=0.20.2",
     "loguru>=0.7.3",
     "mediapipe>=0.10.35",
+    "nodegraphqt>=0.6.44",
     "photoshop-python-api>=0.24.2 ; sys_platform == 'win32'",
     "polars>=1.42.1",
     "psd-tools[composite]>=1.17.4",
+    "pyqtdarktheme>=2.1.0",
     "pyside6>=6.11.1",
     "rembg[cpu]>=2.0.77",
 ]
