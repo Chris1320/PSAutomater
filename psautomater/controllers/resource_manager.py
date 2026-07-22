@@ -21,6 +21,8 @@ class ImageManager:
     __images: dict[str, list[Path | QPixmap | None]] = {}
 
     def __init__(self):
+        """Initialize the ImageManager and store all icon paths into memory."""
+
         if not self.__init:
             logger.debug(
                 "ImageManager has not been initialized. Checking for resources."
@@ -34,7 +36,8 @@ class ImageManager:
                     )
 
     def __getitem__(self, image_name: str) -> QPixmap:
-        """Get an image.
+        """Get an image from the image list. If the image has not been loaded yet,
+        it will be loaded to memory.
 
         Args:
             image_name: The image to get.
@@ -127,7 +130,7 @@ class StyleManager:
         """Convert a hex string to an RGB tuple.
 
         Args:
-            hex_value: The hex string to convert. (#RRGGBB)
+            hex_value: The hex string (`#RRGGBB`) to convert.
 
         Returns:
             A tuple of three integers representing the RGB values.
@@ -177,8 +180,8 @@ class StyleManager:
 
     @staticmethod
     def style_to_dict(style: Style) -> dict[str, str | dict[str, str]]:
-        """Convert a Style object to a dictionary.
-        This is used by qdarktheme to apply the style to the application.
+        """Convert a Style object to a dictionary. This is used by qdarktheme
+        to apply the style to the application.
 
         Args:
             style: The Style object to convert.
