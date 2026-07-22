@@ -1,3 +1,4 @@
+import argparse
 import sys
 
 from loguru import logger
@@ -7,22 +8,20 @@ from psautomater.controllers import info
 from psautomater.views import main_view
 
 
-def main() -> int:
-    """The main entry point of the program.
+def main(debug_mode: bool) -> int:
+    """
+    Args:
+        debug_mode: Whether to enable debug mode for more detailed logging.
 
     Returns:
         The error code of the program.
     """
 
     logger.add(
-        info.logfile_path,
+        info.LOGFILE_PATH,
         format=info.LOGFILE_FORMAT,
         backtrace=True,
-        level=(
-            info.LOGGING_DEBUG_MODE
-            if "--debug" in sys.argv
-            else info.LOGGING_RELEASE_MODE
-        ),
+        level=(info.LOGGING_DEBUG_MODE if debug_mode else info.LOGGING_RELEASE_MODE),
     )
     logger.info("The program has started.")
     logger.debug("args: ({0})", ", ".join(sys.argv))
@@ -50,4 +49,15 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    parser = argparse.ArgumentParser(
+        description="A Photoshop Editing Automation Tool for bulk editing."
+    )
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Enable debug mode.",
+    )
+    args = parser.parse_args()
+
+    __debug_mode = args.debug
+    sys.exit(main(__debug_mode))
