@@ -45,8 +45,11 @@ Resources used:
 
 - [Adobe photoshop icons created by Fathema Khanom - Flaticon](https://www.flaticon.com/free-icons/adobe-photoshop)
 - [Output icons created by inkubators - Flaticon](https://www.flaticon.com/free-icons/output)
+- [Plus icons created by dmitri13 - Flaticon](https://www.flaticon.com/free-icons/plus)
 - [Psd icons created by Good Ware - Flaticon](https://www.flaticon.com/free-icons/psd)
+- [Settings icons created by Pixel perfect - Flaticon](https://www.flaticon.com/free-icons/settings)
 - [Spreadsheet icons created by Creatype - Flaticon](https://www.flaticon.com/free-icons/spreadsheet)
 - [Stop button icons created by Pixel perfect - Flaticon](https://www.flaticon.com/free-icons/stop-button)
+- [Theme icons created by Iamkikirizky - Flaticon](https://www.flaticon.com/free-icons/theme)
 - [Video play icons created by Erifqi Zetiawan - Flaticon](https://www.flaticon.com/free-icons/video-play)
 - [Xlsx icons created by Creativenoys01 - Flaticon](https://www.flaticon.com/free-icons/xlsx)
