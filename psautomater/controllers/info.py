@@ -14,3 +14,5 @@ LOGFILE_PATH = Path("data", "logs", f"log_{strftime('%Y-%m-%d')}.txt")
 LOGFILE_FORMAT = "{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}"
 LOGGING_DEBUG_MODE = "DEBUG"
 LOGGING_RELEASE_MODE = "INFO"
+
+DEFAULT_ENCODING = "utf-8"

@@ -1,0 +1,14 @@
+{
+    "light": {
+        "background": "#eceff4",
+        "border": "#d8dee9",
+        "foreground": "#2e3440",
+        "primary": "#5e81ac"
+    },
+    "dark": {
+        "background": "#2e3440",
+        "border": "#4c566a",
+        "foreground": "#d8dee9",
+        "primary": "#88c0d0"
+    }
+}

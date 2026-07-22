@@ -1,14 +1,21 @@
+import json
 import os
 from pathlib import Path
+from typing import Final
 
 from loguru import logger
+from NodeGraphQt import NodeGraph  # pyright: ignore[reportMissingTypeStubs]
 from PySide6.QtGui import QPixmap
+
+from psautomater.controllers import info
+from psautomater.models.style import Colors, Style, Theme
+
+HEX_CHARS: Final[str] = "0123456789abcdefABCDEF"
+RESOURCES_PATH: Final[Path] = Path(os.getcwd(), "data", "resources")
 
 
 class ImageManager:
     """This class handles the lazy-loading and management of resources."""
-
-    resources_path = Path("data", "resources")
 
     __init: bool = False
     __images: dict[str, list[Path | QPixmap | None]] = {}
@@ -18,14 +25,12 @@ class ImageManager:
             logger.debug(
                 "ImageManager has not been initialized. Checking for resources."
             )
-            for resource in os.listdir(
-                os.path.join(os.getcwd(), "data", "resources", "icons")
-            ):
+            for resource in os.listdir(RESOURCES_PATH / "icons"):
                 # Link all images in the `data/resources/icons` directory.
                 if resource.endswith(".png"):
                     self.add_image(
                         resource[::-1].partition(".")[2][::-1],
-                        Path(os.getcwd(), "data", "resources", "icons", resource),
+                        RESOURCES_PATH / "icons" / resource,
                     )
 
     def __getitem__(self, image_name: str) -> QPixmap:
@@ -84,4 +89,159 @@ class ImageManager:
         )
         self.__images[image_name].append(
             QPixmap(str(self.__images[image_name][0])) if load else None
+        )
+
+
+class StyleManager:
+    __init: bool = False
+    __styles: list[str] = []
+
+    def __init__(self):
+        if not self.__init:
+            logger.debug("StyleManager has not been initialized. Checking for styles.")
+            self.reload()
+            self.__init = True
+
+    def reload(self) -> None:
+        """Reload the available styles list."""
+
+        self.__styles: list[str] = []
+
+        for style in os.listdir(RESOURCES_PATH / "styles"):
+            if style.endswith(".json"):
+                if style in self.__styles:
+                    logger.warning(
+                        "Style {0} already exists in the style manager. Overwriting.",
+                        style,
+                    )
+
+                self.__styles.append(style[::-1].partition(".")[2][::-1])
+                logger.debug(f"Added '{style}' to available styles.")
+
+        logger.debug("Found {0} styles in the style manager.", len(self.__styles))
+
+    @staticmethod
+    def hex_to_rgb(hex_value: str) -> tuple[int, ...]:
+        """Convert a hex string to an RGB tuple.
+
+        Args:
+            hex_value: The hex string to convert. (#RRGGBB)
+
+        Returns:
+            A tuple of three integers representing the RGB values.
+        """
+
+        if hex_value.startswith("#"):
+            hex_value = hex_value[1:]
+
+        if len(hex_value) != 6 or not all(c in HEX_CHARS for c in hex_value):
+            raise ValueError("Invalid hex string.")
+
+        return tuple(int(hex_value[i : i + 2], 16) for i in (0, 2, 4))
+
+    @staticmethod
+    def update_nodegraph_theme(graph: NodeGraph, style: Style, theme: Theme) -> None:
+        """Manually overrides the NodeGraphQt canvas and nodes to match the active theme.
+
+        Args:
+            graph: The NodeGraphQt graph to sync.
+            style: The Style object to use for the theme.
+            theme: The Theme to apply to the graph.
+        """
+
+        bg_color = StyleManager.hex_to_rgb(
+            style.light.background if theme == Theme.LIGHT else style.dark.background
+        )
+        grid_color = StyleManager.hex_to_rgb(
+            style.light.border if theme == Theme.LIGHT else style.dark.border
+        )
+        node_color = StyleManager.hex_to_rgb(
+            style.light.foreground if theme == Theme.LIGHT else style.dark.foreground
+        )
+        text_color = StyleManager.hex_to_rgb(
+            style.light.primary if theme == Theme.LIGHT else style.dark.primary
+        )
+
+        # Repaint the Background Canvas
+        graph.set_background_color(  # pyright: ignore[reportUnknownMemberType]
+            *bg_color
+        )
+        graph.set_grid_color(*grid_color)  # pyright: ignore[reportUnknownMemberType]
+
+        # Repaint any nodes that are currently on the screen
+        for node in graph.all_nodes():  # pyright: ignore[reportUnknownVariableType]
+            node.set_color(*node_color)  # pyright: ignore[reportUnknownMemberType]
+            node.set_text_color(*text_color)  # pyright: ignore[reportUnknownMemberType]
+
+    @staticmethod
+    def style_to_dict(style: Style) -> dict[str, str | dict[str, str]]:
+        """Convert a Style object to a dictionary.
+        This is used by qdarktheme to apply the style to the application.
+
+        Args:
+            style: The Style object to convert.
+
+        Returns:
+            A dictionary version of the style.
+        """
+
+        return {
+            "[light]": {
+                "background": style.light.background,
+                "border": style.light.border,
+                "foreground": style.light.foreground,
+                "primary": style.light.primary,
+            },
+            "[dark]": {
+                "background": style.dark.background,
+                "border": style.dark.border,
+                "foreground": style.dark.foreground,
+                "primary": style.dark.primary,
+            },
+        }
+
+    def get_available_styles(self) -> list[str]:
+        """Get a list of available styles.
+
+        Returns:
+            A list of available styles.
+        """
+
+        return list(self.__styles)
+
+    def get_style(self, style_name: str) -> Style:
+        """Get a style from the available styles.
+
+        Args:
+            style_name: The name of the style to get.
+
+        Returns:
+            The contents of the style file.
+        """
+
+        if style_name not in self.__styles:
+            logger.exception("Unknown style name.")
+            raise ValueError("Unknown style name.")
+
+        with open(
+            RESOURCES_PATH / "styles" / f"{style_name}.json",
+            "r",
+            encoding=info.DEFAULT_ENCODING,
+        ) as f:
+            style = json.load(f)
+
+        return Style(
+            name=style_name,
+            light=Colors(
+                background=style["light"]["background"],
+                border=style["light"]["border"],
+                foreground=style["light"]["foreground"],
+                primary=style["light"]["primary"],
+            ),
+            dark=Colors(
+                background=style["dark"]["background"],
+                border=style["dark"]["border"],
+                foreground=style["dark"]["foreground"],
+                primary=style["dark"]["primary"],
+            ),
         )

@@ -1,10 +1,14 @@
 import argparse
 import sys
 
+import darkdetect  # pyright: ignore[reportMissingTypeStubs]
+import qdarktheme  # pyright: ignore[reportMissingTypeStubs]
 from loguru import logger
 from PySide6.QtWidgets import QApplication
 
 from psautomater.controllers import info
+from psautomater.controllers.resource_manager import StyleManager
+from psautomater.models.style import Theme
 from psautomater.views import main_view
 
 
@@ -37,10 +41,24 @@ def main(debug_mode: bool) -> int:
         app.primaryScreen().size().height(),
     )
 
+    logger.debug("Applying default style...")
+    style_manager = StyleManager()
+    default_style = style_manager.get_style("default")
+    default_theme = Theme.DARK if darkdetect.isDark() else Theme.LIGHT
+    qdarktheme.setup_theme(
+        default_theme.value, custom_colors=style_manager.style_to_dict(default_style)
+    )
+
+    logger.debug("Creating main view...")
     widget = main_view.MainView()
     widget.setMinimumSize(info.WINDOW_SIZE["min"][0], info.WINDOW_SIZE["min"][1])
     widget.setMaximumSize(info.WINDOW_SIZE["max"][0], info.WINDOW_SIZE["max"][1])
     widget.show()
+
+    logger.debug("Applying default style to NodeGraphQt...")
+    StyleManager.update_nodegraph_theme(
+        widget.graph_controller, default_style, default_theme
+    )
 
     logger.info("Running main event loop.")
     ret_code = app.exec()
