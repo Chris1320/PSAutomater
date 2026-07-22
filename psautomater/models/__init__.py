@@ -1,4 +1,8 @@
+from dataclasses import dataclass
 from pathlib import Path
 
-# type definitions
-Row = dict[str, str | int | float | Path | None]
+
+@dataclass(frozen=True)
+class Row:
+    index: int
+    data: dict[str, str | int | float | Path | None]

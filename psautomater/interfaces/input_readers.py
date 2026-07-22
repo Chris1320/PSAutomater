@@ -1,11 +1,12 @@
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Protocol
+
+from PySide6.QtWidgets import QWidget
 
 from psautomater.models import Row
 
 
-class InputReader(Protocol):
+class InputReader(ABC):
     """A plugin protocol for reading input files."""
 
     __filepath: Path
@@ -46,3 +47,33 @@ class InputReader(Protocol):
     @abstractmethod
     def has_previous_row(self) -> bool:
         """Returns True if there are previous rows to read from the input file, False otherwise."""
+
+
+class InputReaderNode(ABC):
+    """The UI node for the InputReader plugin protocol."""
+
+    @property
+    @abstractmethod
+    def name(self) -> str:
+        """Returns the name of the InputReader plugin."""
+
+    @property
+    @abstractmethod
+    def version(self) -> str:
+        """Returns the version of the InputReader plugin."""
+
+    @abstractmethod
+    def show_initial_configuration_dialog(self) -> QWidget:
+        """Returns the QWidget dialog to be shown for the initial configuration of the plugin."""
+
+    @abstractmethod
+    def show_configuration_dialog(self) -> QWidget:
+        """Returns the QWidget dialog to be shown for the configuration of the plugin."""
+
+    @abstractmethod
+    def node_summary_widget(self) -> QWidget:
+        """Returns the QWidget that shows in the node graph."""
+
+    @abstractmethod
+    def get_input_reader(self) -> InputReader:
+        """Returns an instance of the InputReader plugin."""
