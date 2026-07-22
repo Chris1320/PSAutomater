@@ -27,13 +27,12 @@ class ImageManager:
             logger.debug(
                 "ImageManager has not been initialized. Checking for resources."
             )
-            for resource in os.listdir(RESOURCES_PATH / "icons"):
+            for resource in (RESOURCES_PATH / "icons").glob("*.png"):
                 # Link all images in the `data/resources/icons` directory.
-                if resource.endswith(".png"):
-                    self.add_image(
-                        resource[::-1].partition(".")[2][::-1],
-                        RESOURCES_PATH / "icons" / resource,
-                    )
+                self.add_image(
+                    resource.stem,
+                    RESOURCES_PATH / "icons" / resource,
+                )
 
     def __getitem__(self, image_name: str) -> QPixmap:
         """Get an image from the image list. If the image has not been loaded yet,
@@ -112,16 +111,15 @@ class StyleManager:
 
         self.__styles: list[str] = []
 
-        for style in os.listdir(RESOURCES_PATH / "styles"):
-            if style.endswith(".json"):
-                if style in self.__styles:
-                    logger.warning(
-                        "Style {0} already exists in the style manager. Overwriting.",
-                        style,
-                    )
+        for style in (RESOURCES_PATH / "styles").glob("*.json"):
+            if style.stem in self.__styles:
+                logger.warning(
+                    "Style {0} already exists in the style manager. Overwriting.",
+                    style.stem,
+                )
 
-                self.__styles.append(style[::-1].partition(".")[2][::-1])
-                logger.debug(f"Added '{style}' to available styles.")
+            self.__styles.append(style.stem)
+            logger.debug(f"Added '{style.stem}' to available styles.")
 
         logger.debug("Found {0} styles in the style manager.", len(self.__styles))
 
