@@ -12,7 +12,7 @@ from psautomater.models.style import Theme
 from psautomater.views import main_view
 
 
-def main(debug_mode: bool) -> int:
+def main(theme: Theme, debug_mode: bool) -> int:
     """
     Args:
         debug_mode: Whether to enable debug mode for more detailed logging.
@@ -44,9 +44,8 @@ def main(debug_mode: bool) -> int:
     logger.debug("Applying default style...")
     style_manager = StyleManager()
     default_style = style_manager.get_style("default")
-    default_theme = Theme.DARK if darkdetect.isDark() else Theme.LIGHT
     qdarktheme.setup_theme(
-        default_theme.value, custom_colors=style_manager.style_to_dict(default_style)
+        theme.value, custom_colors=style_manager.style_to_dict(default_style)
     )
 
     logger.debug("Creating main view...")
@@ -56,9 +55,7 @@ def main(debug_mode: bool) -> int:
     widget.show()
 
     logger.debug("Applying default style to NodeGraphQt...")
-    StyleManager.update_nodegraph_theme(
-        widget.graph_controller, default_style, default_theme
-    )
+    StyleManager.update_nodegraph_theme(widget.graph_controller, default_style, theme)
 
     logger.info("Running main event loop.")
     ret_code = app.exec()
@@ -71,11 +68,31 @@ if __name__ == "__main__":
         description="A Photoshop Editing Automation Tool for bulk editing."
     )
     parser.add_argument(
+        "--theme",
+        choices=["auto", "light", "dark"],
+        default="auto",
+        help="Force the application to use a specific theme.",
+    )
+    parser.add_argument(
         "--debug",
         action="store_true",
         help="Enable debug mode.",
     )
     args = parser.parse_args()
 
+    __theme = Theme.DARK if darkdetect.isDark() else Theme.LIGHT
+    match args.theme:
+        case "auto":
+            pass
+
+        case "light":
+            __theme = Theme.LIGHT
+
+        case "dark":
+            __theme = Theme.DARK
+
+        case _:
+            pass
+
     __debug_mode = args.debug
-    sys.exit(main(__debug_mode))
+    sys.exit(main(__theme, __debug_mode))

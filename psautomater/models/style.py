@@ -7,7 +7,6 @@ class Theme(Enum):
 
     LIGHT = "light"
     DARK = "dark"
-    AUTO = "auto"
 
 
 @dataclass(frozen=True)
