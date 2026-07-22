@@ -70,7 +70,7 @@ class PluginManager:
 
     def get_all_plugin_metadata(
         self, kind: NodeKind | None = None
-    ) -> dict[NodeKind, list[NodeMetadata]]:
+    ) -> dict[NodeKind, list[NodeMetadata]] | list[NodeMetadata]:
         """Get metadata for all plugins.
 
         Args:
@@ -89,6 +89,9 @@ class PluginManager:
         for plugin in self.__plugins.values():
             if kind is None or plugin.metadata.kind == kind:
                 result[plugin.metadata.kind].append(plugin.metadata)
+
+        if kind is not None:
+            return result[kind]
 
         return result
 

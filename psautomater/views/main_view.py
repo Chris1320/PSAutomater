@@ -5,10 +5,10 @@ from PySide6 import QtCore, QtGui, QtWidgets
 from psautomater.controllers import info, plugin_manager, resource_manager
 from psautomater.models import NodeKind
 
-NODE_CATEGORIES: list[tuple[str, NodeKind]] = [
-    ("Input Readers", NodeKind.INPUT_READER),
-    ("Hooks", NodeKind.HOOK),
-    ("Output Generators", NodeKind.OUTPUT_GENERATOR),
+NODE_CATEGORIES: list[tuple[NodeKind, str]] = [
+    (NodeKind.INPUT_READER, "Input Readers"),
+    (NodeKind.HOOK, "Hooks"),
+    (NodeKind.OUTPUT_GENERATOR, "Output Generators"),
 ]
 
 
@@ -20,6 +20,7 @@ class MainView(QtWidgets.QMainWindow):
         logger.info("Initializing MainView...")
         super().__init__()  # pyright: ignore[reportUnknownMemberType]
         self.graph_controller = NodeGraph()
+        self.selected_kind: NodeKind | None = NodeKind.INPUT_READER
 
         self.process_progress_bar = QtWidgets.QProgressBar()
         self.process_progress_bar.setFormat("%v/%m")
@@ -75,6 +76,9 @@ class MainView(QtWidgets.QMainWindow):
         return layout
 
     def add_content_layout(self) -> QtWidgets.QLayout:
+        def on_category_changed(idx: int) -> None:
+            self.update_nodes_list(NODE_CATEGORIES[idx][0])
+
         top_buttons_size = QtCore.QSize(25, 25)
         layout = QtWidgets.QHBoxLayout()
 
@@ -106,26 +110,24 @@ class MainView(QtWidgets.QMainWindow):
         node_selection_layout = QtWidgets.QVBoxLayout()
         node_category_label = QtWidgets.QLabel("Node Category")
         node_category_combo = QtWidgets.QComboBox()
-        nodes_list = QtWidgets.QListWidget()
-        node_category_combo.addItems([category for category, _ in NODE_CATEGORIES])
-        node_category_combo.setCurrentIndex(0)
+        self.nodes_list = QtWidgets.QListWidget()
+        node_category_combo.addItems([category for _, category in NODE_CATEGORIES])
+        node_category_combo.setCurrentIndex(
+            node_category_combo.findText("Input Readers")
+        )
+        node_category_combo.currentIndexChanged.connect(  # pyright: ignore[reportUnknownMemberType]
+            on_category_changed
+        )
         node_selection_layout.addWidget(node_category_label)
         node_selection_layout.addWidget(node_category_combo)
-        nodes_list.setSelectionMode(
+        self.nodes_list.setSelectionMode(
             QtWidgets.QAbstractItemView.SelectionMode.SingleSelection
         )
-        nodes_list.addItems(
-            [
-                node.name
-                for node in self.plugin_manager.get_all_plugin_metadata(
-                    NODE_CATEGORIES[node_category_combo.currentIndex()][1]
-                )[NODE_CATEGORIES[node_category_combo.currentIndex()][1]]
-            ]
-        )
+        self.update_nodes_list(NODE_CATEGORIES[node_category_combo.currentIndex()][0])
 
         sidebar_layout.addLayout(top_buttons_layout)
         sidebar_layout.addLayout(node_selection_layout)
-        sidebar_layout.addWidget(nodes_list)
+        sidebar_layout.addWidget(self.nodes_list)
         sidebar.setLayout(sidebar_layout)
 
         layout.addWidget(sidebar)
@@ -136,3 +138,19 @@ class MainView(QtWidgets.QMainWindow):
         layout = QtWidgets.QHBoxLayout()
         layout.addWidget(self.process_progress_bar)
         return layout
+
+    def update_nodes_list(self, kind: NodeKind) -> None:
+        """Update the nodes list based on the selected kind.
+
+        Args:
+            kind: The kind of node to display.
+        """
+
+        self.selected_kind = kind
+        self.nodes_list.clear()
+        self.nodes_list.addItems(
+            [
+                node.name
+                for node in self.plugin_manager.get_all_plugin_metadata(kind=kind)
+            ]
+        )
