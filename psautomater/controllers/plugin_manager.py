@@ -4,6 +4,7 @@ from types import ModuleType
 from typing import Final
 
 from loguru import logger
+from NodeGraphQt import NodeGraph  # pyright: ignore[reportMissingTypeStubs]
 
 from psautomater.models import NodeKind, NodeMetadata
 from psautomater.models.exceptions import PluginNotFoundError
@@ -24,9 +25,10 @@ class PluginManager:
     __plugins: dict[str, Node] = {}
     __init = False
 
-    def __init__(self):
+    def __init__(self, graph_controller: NodeGraph):
         if not self.__init:
             logger.info("Initializing PluginManager...")
+            self.__graph_controller = graph_controller
             self.scan_plugins()
             self.__init = True
 
@@ -51,6 +53,9 @@ class PluginManager:
             import_name = f"{PLUGIN_IMPORT_ROOT}.input_readers.{plugin_file.stem}"
             try:
                 module = importlib.import_module(import_name)
+                self.__graph_controller.register_node(  # pyright: ignore[reportUnknownMemberType]
+                    module.InputReaderPluginNode
+                )
                 logger.info(f'Added "{module.NAME}" v{module.VERSION}')
                 self.__plugins[module.UID] = Node(
                     metadata=NodeMetadata(

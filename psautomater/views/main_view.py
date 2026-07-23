@@ -3,7 +3,7 @@ from NodeGraphQt import NodeGraph  # pyright: ignore[reportMissingTypeStubs]
 from PySide6 import QtCore, QtGui, QtWidgets
 
 from psautomater.controllers import info, plugin_manager, resource_manager
-from psautomater.models import NodeKind
+from psautomater.models import NodeKind, NodeMetadata
 
 NODE_CATEGORIES: list[tuple[NodeKind, str]] = [
     (NodeKind.INPUT_READER, "Input Readers"),
@@ -14,13 +14,19 @@ NODE_CATEGORIES: list[tuple[NodeKind, str]] = [
 
 class MainView(QtWidgets.QMainWindow):
     resource_manager = resource_manager.ImageManager()
-    plugin_manager = plugin_manager.PluginManager()
 
     def __init__(self):
         logger.info("Initializing MainView...")
         super().__init__()  # pyright: ignore[reportUnknownMemberType]
-        self.graph_controller = NodeGraph()
         self.selected_kind: NodeKind | None = NodeKind.INPUT_READER
+        self.plugin_metadata: dict[NodeKind, list[NodeMetadata]] = {
+            NodeKind.INPUT_READER: [],
+            NodeKind.HOOK: [],
+            NodeKind.OUTPUT_GENERATOR: [],
+        }
+
+        self.graph_controller = NodeGraph(parent=self)
+        self.plugin_manager = plugin_manager.PluginManager(self.graph_controller)
 
         self.process_progress_bar = QtWidgets.QProgressBar()
         self.process_progress_bar.setFormat("%v/%m")
@@ -77,6 +83,24 @@ class MainView(QtWidgets.QMainWindow):
         def on_category_changed(idx: int) -> None:
             self.update_nodes_list(NODE_CATEGORIES[idx][0])
 
+        def on_add_node_clicked() -> None:
+            selected_item: int = self.nodes_list.currentRow()
+            if selected_item < 0:
+                logger.warning("No node selected. Cannot add node.")
+                return
+
+            if self.selected_kind is None:
+                logger.warning("No node kind selected. Cannot add node.")
+                return
+
+            plugin_metadata: NodeMetadata = self.plugin_metadata[self.selected_kind][
+                selected_item
+            ]
+            node_to_add = self.plugin_manager.get_plugin(plugin_metadata.uid)
+            self.graph_controller.add_node(  # pyright: ignore[reportUnknownMemberType]
+                node_to_add.entrypoint.InputReaderPluginNode()
+            )
+
         top_buttons_size = QtCore.QSize(25, 25)
         layout = QtWidgets.QHBoxLayout()
 
@@ -103,6 +127,11 @@ class MainView(QtWidgets.QMainWindow):
         recipes_button.setToolTip("Manage Recipes")
         process_button.setToolTip("Start Process")
         settings_button.setToolTip("Settings")
+
+        add_node_button.clicked.connect(  # pyright: ignore[reportUnknownMemberType]
+            on_add_node_clicked
+        )
+
         top_buttons_layout.addWidget(add_node_button)
         top_buttons_layout.addWidget(recipes_button)
         top_buttons_layout.addWidget(process_button)
@@ -152,4 +181,4 @@ class MainView(QtWidgets.QMainWindow):
         self.nodes_list.clear()
         for node in self.plugin_manager.get_all_plugin_metadata_by_kind(kind=kind):
             self.nodes_list.addItem(node.name)
-            self.selected_plugin_metadata[kind].append(node)
+            self.plugin_metadata[kind].append(node)

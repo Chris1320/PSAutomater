@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Generator
 
+from NodeGraphQt import BaseNode  # pyright: ignore[reportMissingTypeStubs]
 from PySide6.QtWidgets import QWidget
 
 from psautomater.models import Row
@@ -42,8 +43,12 @@ class InputReader(ABC):
         """Returns True if there are previous rows to read from the input file, False otherwise."""
 
 
-class InputReaderNode(ABC):
+class InputReaderNodeView(ABC, BaseNode):
     """The UI node for the InputReader plugin protocol."""
+
+    def __init__(self):
+        """Initializes the InputReaderNodeView."""
+        super().__init__()  # pyright: ignore[reportUnknownMemberType]
 
     @abstractmethod
     def show_initial_configuration_dialog(self) -> QWidget:

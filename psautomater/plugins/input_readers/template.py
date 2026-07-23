@@ -3,7 +3,7 @@ from typing import Any, Final, Generator
 
 from PySide6 import QtWidgets
 
-from psautomater.interfaces.input_readers import InputReader, InputReaderNode
+from psautomater.interfaces.input_readers import InputReader, InputReaderNodeView
 from psautomater.models import NodeKind, Row
 
 UID: Final[str] = "chris1320.template_plugin"
@@ -74,8 +74,11 @@ class InputReaderPlugin(InputReader):
         return self.curr_idx > 0
 
 
-class InputReaderPluginNode(InputReaderNode):
+class InputReaderPluginNode(InputReaderNodeView):
     """Template input reader plugin node."""
+
+    __identifier__: Final[str] = UID
+    NODE_NAME: Final[str] = NAME
 
     def __init__(self):
         super().__init__()
