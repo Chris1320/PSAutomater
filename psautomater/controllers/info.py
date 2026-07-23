@@ -2,7 +2,7 @@ from pathlib import Path
 from time import strftime
 
 NAME: str = "PSAutomater"
-VERSION: tuple[int, int, int] = (0, 2, 2)
+VERSION: tuple[int, int, int] = (0, 3, 0)
 TITLE: str = f"{NAME} v{'.'.join(map(str, VERSION))}"
 
 WINDOW_SIZE: dict[str, tuple[int, int]] = {  # (w, h)
@@ -10,7 +10,9 @@ WINDOW_SIZE: dict[str, tuple[int, int]] = {  # (w, h)
     "max": (1920, 1080),
 }
 
-logfile_path = Path("data", "logs", f"log_{strftime('%Y-%m-%d')}.txt")
+LOGFILE_PATH = Path("data", "logs", f"log_{strftime('%Y-%m-%d')}.txt")
 LOGFILE_FORMAT = "{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}"
 LOGGING_DEBUG_MODE = "DEBUG"
 LOGGING_RELEASE_MODE = "INFO"
+
+DEFAULT_ENCODING = "utf-8"
