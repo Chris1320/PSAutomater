@@ -68,13 +68,8 @@ class PluginManager:
 
         logger.info(f"Loaded {input_reader_len} input reader plugins.")
 
-    def get_all_plugin_metadata(
-        self, kind: NodeKind | None = None
-    ) -> dict[NodeKind, list[NodeMetadata]] | list[NodeMetadata]:
+    def get_all_plugin_metadata(self) -> dict[NodeKind, list[NodeMetadata]]:
         """Get metadata for all plugins.
-
-        Args:
-            kind: The kind of plugin to get metadata for. If None, all plugins are returned.
 
         Returns:
             A dictionary of plugin metadata, keyed by plugin UID.
@@ -87,13 +82,27 @@ class PluginManager:
         }
 
         for plugin in self.__plugins.values():
-            if kind is None or plugin.metadata.kind == kind:
-                result[plugin.metadata.kind].append(plugin.metadata)
-
-        if kind is not None:
-            return result[kind]
+            result[plugin.metadata.kind].append(plugin.metadata)
 
         return result
+
+    def get_all_plugin_metadata_by_kind(
+        self, kind: NodeKind | None = None
+    ) -> list[NodeMetadata]:
+        """Get metadata for all plugins of a specific kind.
+
+        Args:
+            kind: The kind of plugin to get metadata for.
+
+        Returns:
+            A list of plugin metadata for the specified kind.
+        """
+
+        return [
+            plugin.metadata
+            for plugin in self.__plugins.values()
+            if plugin.metadata.kind == kind
+        ]
 
     def get_plugin(self, uid: str) -> Node:
         """Get a plugin by its UID.

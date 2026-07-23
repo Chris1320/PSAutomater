@@ -30,7 +30,6 @@ class MainView(QtWidgets.QMainWindow):
 
         self.start_button = QtWidgets.QPushButton("Start Generation")
         self.start_button.setIcon(self.resource_manager["start"])
-        # self.start_button.clicked.connect(self.start_process)
 
         self.start_time: float | None = None
         self.end_time: float | None = None
@@ -39,7 +38,6 @@ class MainView(QtWidgets.QMainWindow):
         self.main_container = QtWidgets.QWidget()
         self.main_layout = QtWidgets.QVBoxLayout()
 
-        # TODO: re-add UI content
         self.main_layout.addLayout(self.add_header_layout())
         self.main_layout.addLayout(self.add_content_layout())
         self.main_layout.addLayout(self.add_footer_layout())
@@ -152,9 +150,6 @@ class MainView(QtWidgets.QMainWindow):
 
         self.selected_kind = kind
         self.nodes_list.clear()
-        self.nodes_list.addItems(
-            [
-                node.name
-                for node in self.plugin_manager.get_all_plugin_metadata(kind=kind)
-            ]
-        )
+        for node in self.plugin_manager.get_all_plugin_metadata_by_kind(kind=kind):
+            self.nodes_list.addItem(node.name)
+            self.selected_plugin_metadata[kind].append(node)
